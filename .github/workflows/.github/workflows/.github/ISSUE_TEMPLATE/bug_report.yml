@@ -1,0 +1,46 @@
+name: Something does not work
+description: Report a problem with HESC
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting. **Do not paste private data** (addresses, names, passwords, tokens).
+        Entity names of your own devices are fine when they help.
+  - type: input
+    id: version
+    attributes:
+      label: HESC version
+      description: Shown under the logo on the HESC dashboard, for example 3.0.0.
+    validations:
+      required: true
+  - type: input
+    id: ha_version
+    attributes:
+      label: Home Assistant version
+    validations:
+      required: true
+  - type: dropdown
+    id: charger
+    attributes:
+      label: Charger type
+      options: [Wallbox, Alfen Eve, Peblar, myenergi Zappi, go-e Charger, Fronius Wattpilot, SMA EV Charger, Ohme, Easee, "evcc (any charger)", "Other (manual)"]
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: status
+    attributes:
+      label: What the dashboard shows
+      description: The Status card and the notice line on Main, or a screenshot.
+  - type: textarea
+    id: logs
+    attributes:
+      label: Log lines (optional)
+      description: Settings → System → Logs, lines that mention "hesc".
+      render: text
