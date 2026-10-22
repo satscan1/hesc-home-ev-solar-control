@@ -1,0 +1,803 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Charger",
+        "description": "Choose your charger type. HESC v3 starts in shadow mode: it reads everything and switches nothing.",
+        "data": {
+          "charger_type": "Charger type"
+        },
+        "data_description": {
+          "charger_type": "Fills in the brand values and, where exactly one is found, the charger entities (as in v2)."
+        }
+      },
+      "sources": {
+        "title": "Sources",
+        "description": "Solar power, grid power and the solar forecast.",
+        "data": {
+          "use_hpvc_sources": "PV and grid power from HPVC",
+          "pv_power_sensor": "PV power",
+          "grid_power_sensor": "Grid power",
+          "grid_export_positive": "Grid sensor: export is positive",
+          "forecast_now_sensor": "Solar forecast now",
+          "forecast_30m_sensor": "Solar forecast in 30 minutes",
+          "forecast_attribute": "Forecast attribute",
+          "solar_today_sensor": "Solar forecast today",
+          "solar_tomorrow_sensor": "Solar forecast tomorrow",
+          "use_irradiance": "Use local weather station",
+          "irradiance_sensor": "Irradiance sensor",
+          "grid_power_l1_sensor": "Grid power phase 1",
+          "grid_power_l2_sensor": "Grid power phase 2",
+          "grid_power_l3_sensor": "Grid power phase 3"
+        },
+        "data_description": {
+          "use_hpvc_sources": "Use the PV and grid sensors chosen in HPVC, when HPVC has them (as in v2). Your own choice below is used otherwise.",
+          "pv_power_sensor": "W or kW; kW is converted. Not needed when HPVC provides it.",
+          "grid_power_sensor": "Optional. W or kW.",
+          "grid_export_positive": "Switch on when your grid sensor shows export as a positive value.",
+          "forecast_attribute": "Attribute to read instead of the state; empty = use the state.",
+          "solar_today_sensor": "Optional. Solcast (detailedForecast attribute) or Open-Meteo Solar Forecast (watts attribute).",
+          "solar_tomorrow_sensor": "Optional.",
+          "irradiance_sensor": "W/m², or a lux meter (lx is converted, about 120 lx per W/m²); needed when the weather station is used.",
+          "forecast_now_sensor": "Optional. Leave empty when you have no solar forecast: HESC then plans on prices and charges on measured sun.",
+          "grid_power_l1_sensor": "Optional, for the phase advice: the grid power of each phase from your meter (W or kW, net). HESC works out the sign itself.",
+          "grid_power_l2_sensor": "Optional, see phase 1.",
+          "grid_power_l3_sensor": "Optional, see phase 1."
+        }
+      },
+      "ev": {
+        "title": "Electric vehicle",
+        "description": "How HESC sees the car.\n\n{soc_hint}",
+        "data": {
+          "ev_connected_sensor": "EV connected",
+          "ev_disconnected_values": "Values that mean 'no car'",
+          "ev_power_sensor": "Charging power",
+          "ev_soc_sensor": "EV battery level",
+          "ev_green_energy_sensor": "EV green energy"
+        },
+        "data_description": {
+          "ev_disconnected_values": "Comma separated, not case sensitive.",
+          "ev_power_sensor": "W or kW; kW is converted.",
+          "ev_soc_sensor": "Recommended. Used for the charge goal, the minimum charge and 'car full'. Without it HESC plans in kWh only.",
+          "ev_green_energy_sensor": "Optional."
+        }
+      },
+      "charger": {
+        "title": "Charger entities",
+        "description": "How HESC sees the charger's solar mode.",
+        "data": {
+          "charger_mode_entity": "Charger mode entity",
+          "charger_eco_values": "Solar mode value(s)",
+          "charger_solar_switch_entity": "Solar switch",
+          "charger_start_stop_entity": "Start/stop entity",
+          "charger_resume_entity": "Resume entity",
+          "charger_current_entity": "Charging current"
+        },
+        "data_description": {
+          "charger_eco_values": "Comma separated mode values that mean the charger is in its solar mode.",
+          "charger_solar_switch_entity": "Optional; only for chargers that also need a switch for solar charging.",
+          "charger_start_stop_entity": "Optional.",
+          "charger_resume_entity": "Optional.",
+          "charger_current_entity": "Optional. Lets HESC turn the charger down while it charges from the grid, so more of the charge comes from the sun (the EV is still full on time). Wallbox: \"Maximum charging current\" (needs a Wallbox admin account)."
+        }
+      },
+      "hpvc": {
+        "title": "HPVC",
+        "description": "HESC works together with HPVC, or on its own.",
+        "data": {
+          "standalone": "Without HPVC (standalone)",
+          "hpvc_enabled_entity": "HPVC enabled entity",
+          "hpvc_limited_entity": "HPVC limiting entity"
+        }
+      }
+    },
+    "error": {
+      "irradiance_required": "Choose an irradiance sensor, or switch off the weather station.",
+      "eco_values_required": "Enter at least one solar mode value.",
+      "hpvc_required": "Choose the HPVC entities, or switch on standalone.",
+      "pv_required": "Choose a PV power sensor, or take it from HPVC.",
+      "phases_all_or_none": "Choose all three phases (three different sensors), or leave all three empty."
+    },
+    "abort": {
+      "already_configured": "HESC v3 is already set up.",
+      "single_instance_allowed": "HESC v3 is already set up."
+    }
+  },
+  "options": {
+    "step": {
+      "sources": {
+        "title": "Sources",
+        "description": "Solar power, grid power and the solar forecast.",
+        "data": {
+          "use_hpvc_sources": "PV and grid power from HPVC",
+          "pv_power_sensor": "PV power",
+          "grid_power_sensor": "Grid power",
+          "grid_export_positive": "Grid sensor: export is positive",
+          "forecast_now_sensor": "Solar forecast now",
+          "forecast_30m_sensor": "Solar forecast in 30 minutes",
+          "forecast_attribute": "Forecast attribute",
+          "solar_today_sensor": "Solar forecast today",
+          "solar_tomorrow_sensor": "Solar forecast tomorrow",
+          "use_irradiance": "Use local weather station",
+          "irradiance_sensor": "Irradiance sensor",
+          "grid_power_l1_sensor": "Grid power phase 1",
+          "grid_power_l2_sensor": "Grid power phase 2",
+          "grid_power_l3_sensor": "Grid power phase 3"
+        },
+        "data_description": {
+          "use_hpvc_sources": "Use the PV and grid sensors chosen in HPVC, when HPVC has them (as in v2). Your own choice below is used otherwise.",
+          "pv_power_sensor": "W or kW; kW is converted. Not needed when HPVC provides it.",
+          "grid_power_sensor": "Optional. W or kW.",
+          "grid_export_positive": "Switch on when your grid sensor shows export as a positive value.",
+          "forecast_attribute": "Attribute to read instead of the state; empty = use the state.",
+          "solar_today_sensor": "Optional. Solcast (detailedForecast attribute) or Open-Meteo Solar Forecast (watts attribute).",
+          "solar_tomorrow_sensor": "Optional.",
+          "irradiance_sensor": "W/m², or a lux meter (lx is converted, about 120 lx per W/m²); needed when the weather station is used.",
+          "forecast_now_sensor": "Optional. Leave empty when you have no solar forecast: HESC then plans on prices and charges on measured sun.",
+          "grid_power_l1_sensor": "Optional, for the phase advice: the grid power of each phase from your meter (W or kW, net). HESC works out the sign itself.",
+          "grid_power_l2_sensor": "Optional, see phase 1.",
+          "grid_power_l3_sensor": "Optional, see phase 1."
+        }
+      },
+      "ev": {
+        "title": "Electric vehicle",
+        "description": "How HESC sees the car.\n\n{soc_hint}",
+        "data": {
+          "ev_connected_sensor": "EV connected",
+          "ev_disconnected_values": "Values that mean 'no car'",
+          "ev_power_sensor": "Charging power",
+          "ev_soc_sensor": "EV battery level",
+          "ev_green_energy_sensor": "EV green energy"
+        },
+        "data_description": {
+          "ev_disconnected_values": "Comma separated, not case sensitive.",
+          "ev_power_sensor": "W or kW; kW is converted.",
+          "ev_soc_sensor": "Recommended. Used for the charge goal, the minimum charge and 'car full'. Without it HESC plans in kWh only.",
+          "ev_green_energy_sensor": "Optional."
+        }
+      },
+      "charger": {
+        "title": "Charger entities",
+        "description": "How HESC sees the charger's solar mode.",
+        "data": {
+          "charger_mode_entity": "Charger mode entity",
+          "charger_eco_values": "Solar mode value(s)",
+          "charger_solar_switch_entity": "Solar switch",
+          "charger_start_stop_entity": "Start/stop entity",
+          "charger_resume_entity": "Resume entity",
+          "charger_current_entity": "Charging current"
+        },
+        "data_description": {
+          "charger_eco_values": "Comma separated mode values that mean the charger is in its solar mode.",
+          "charger_solar_switch_entity": "Optional; only for chargers that also need a switch for solar charging.",
+          "charger_start_stop_entity": "Optional.",
+          "charger_resume_entity": "Optional.",
+          "charger_current_entity": "Optional. Lets HESC turn the charger down while it charges from the grid, so more of the charge comes from the sun (the EV is still full on time). Wallbox: \"Maximum charging current\" (needs a Wallbox admin account)."
+        }
+      },
+      "hpvc": {
+        "title": "HPVC",
+        "description": "HESC works together with HPVC, or on its own.",
+        "data": {
+          "standalone": "Without HPVC (standalone)",
+          "hpvc_enabled_entity": "HPVC enabled entity",
+          "hpvc_limited_entity": "HPVC limiting entity"
+        }
+      },
+      "init": {
+        "title": "Charger",
+        "description": "Choose the charger type again. Brand values are only replaced when you switch from one brand to another; empty charger fields are searched again (as in v2).",
+        "data": {
+          "charger_type": "Charger type"
+        }
+      }
+    },
+    "error": {
+      "irradiance_required": "Choose an irradiance sensor, or switch off the weather station.",
+      "eco_values_required": "Enter at least one solar mode value.",
+      "hpvc_required": "Choose the HPVC entities, or switch on standalone.",
+      "pv_required": "Choose a PV power sensor, or take it from HPVC.",
+      "phases_all_or_none": "Choose all three phases (three different sensors), or leave all three empty."
+    }
+  },
+  "entity": {
+    "button": {
+      "costs_export": {
+        "name": "Export charging costs"
+      },
+      "settings_backup": {
+        "name": "Settings back-up"
+      },
+      "settings_restore": {
+        "name": "Settings restore"
+      },
+      "settings_reset": {
+        "name": "Settings to standard values"
+      },
+      "notify_test": {
+        "name": "Send a test notification"
+      },
+      "generate_report": {
+        "name": "Generate report"
+      },
+      "take_over_v2": {
+        "name": "Take over settings and history from v2"
+      },
+      "charger_search": {
+        "name": "Search charger entities again"
+      },
+      "charge_now_plan_goal": {
+        "name": "Charge now to the plan goal"
+      },
+      "charge_now_stop": {
+        "name": "Stop charge now"
+      },
+      "skip_next_day": {
+        "name": "Skip the next day of the weekly plan"
+      },
+      "undo_skip_day": {
+        "name": "Undo skipping a day"
+      },
+      "plan_off": {
+        "name": "Charge plan off"
+      }
+    },
+    "sensor": {
+      "pv_power": {
+        "name": "PV power"
+      },
+      "grid_power": {
+        "name": "Grid power"
+      },
+      "ev_power": {
+        "name": "EV charging power"
+      },
+      "forecast_now": {
+        "name": "Solar forecast now"
+      },
+      "forecast_30m": {
+        "name": "Solar forecast in 30 minutes"
+      },
+      "irradiance": {
+        "name": "Irradiance"
+      },
+      "ev_soc": {
+        "name": "EV battery level"
+      },
+      "charger_mode": {
+        "name": "Charger mode"
+      },
+      "missing_inputs": {
+        "name": "Missing inputs"
+      },
+      "state": {
+        "name": "State"
+      },
+      "reason": {
+        "name": "Reason"
+      },
+      "last_action": {
+        "name": "Last action"
+      },
+      "insight_today": {
+        "name": "Today"
+      },
+      "insight_accuracy": {
+        "name": "Accuracy today"
+      },
+      "insight_now": {
+        "name": "Now"
+      },
+      "plan_status": {
+        "name": "Charge plan status"
+      },
+      "kick_status": {
+        "name": "Home battery and EV status"
+      },
+      "costs_export_info": {
+        "name": "Charging costs export"
+      },
+      "charging_costs": {
+        "name": "Charging costs"
+      },
+      "prices": {
+        "name": "Prices"
+      },
+      "charge_plan": {
+        "name": "Charge plan"
+      },
+      "price_forecast": {
+        "name": "Price forecast"
+      },
+      "expected_charge_cost": {
+        "name": "Expected charge cost"
+      },
+      "holidays": {
+        "name": "Holidays"
+      },
+      "ev_battery_level": {
+        "name": "EV battery level with fallbacks"
+      },
+      "notice": {
+        "name": "Notice"
+      },
+      "settings_backup_info": {
+        "name": "Settings back-up info"
+      },
+      "solar_still_to_come_today": {
+        "name": "Solar still to come today"
+      },
+      "notification_phones": {
+        "name": "Notification phones"
+      },
+      "diag_pv_power": {
+        "name": "PV power (diagnostic)"
+      },
+      "diag_ev_power": {
+        "name": "Charging power (diagnostic)"
+      },
+      "diag_forecast_power": {
+        "name": "Forecast power (diagnostic)"
+      },
+      "diag_forecast_cautious": {
+        "name": "Forecast power, cautious (diagnostic)"
+      },
+      "diag_irradiance": {
+        "name": "Irradiance (diagnostic)"
+      },
+      "charger_profile": {
+        "name": "Charger profile"
+      },
+      "setup": {
+        "name": "Setup"
+      },
+      "compare": {
+        "name": "Differences with v2 today"
+      },
+      "advice_threshold": {
+        "name": "Advised start threshold"
+      },
+      "advice": {
+        "name": "Advice"
+      },
+      "advice_updated": {
+        "name": "Advice updated"
+      },
+      "report_generated": {
+        "name": "Report generated"
+      },
+      "forecast_source": {
+        "name": "Solar forecast source",
+        "state": {
+          "solcast": "Solcast",
+          "series": "Forecast series (Open-Meteo / Forecast.Solar)",
+          "sensors": "Forecast sensors",
+          "none": "No forecast"
+        }
+      },
+      "current_status": {
+        "name": "Charging power follows the sun"
+      },
+      "phase_advice": {
+        "name": "Phase advice",
+        "state": {
+          "not_available": "Not available",
+          "measuring": "Measuring",
+          "provisional": "Provisional",
+          "confirmed": "Confirmed"
+        }
+      },
+      "summary": {
+        "name": "Summary for phone and watch"
+      }
+    },
+    "binary_sensor": {
+      "inputs_valid": {
+        "name": "Inputs valid"
+      },
+      "ev_connected": {
+        "name": "EV connected"
+      },
+      "charger_solar_mode": {
+        "name": "Charger in solar mode"
+      },
+      "hpvc_limiting": {
+        "name": "HPVC limiting"
+      },
+      "diag_ev_connected": {
+        "name": "EV connected (diagnostic)"
+      },
+      "diag_charger_solar_mode": {
+        "name": "Charger in solar mode (diagnostic)"
+      },
+      "diag_release_active": {
+        "name": "Release active (diagnostic)"
+      },
+      "configuration_valid": {
+        "name": "Configuration valid"
+      },
+      "prices_available": {
+        "name": "Prices available"
+      },
+      "check_charger": {
+        "name": "Check: charger"
+      },
+      "check_sources": {
+        "name": "Check: sources"
+      },
+      "check_weather_station": {
+        "name": "Check: weather station"
+      },
+      "check_charge_plan": {
+        "name": "Check: charge plan"
+      },
+      "check_home_battery_and_ev": {
+        "name": "Check: home battery and EV"
+      },
+      "setup_standalone": {
+        "name": "Setup: standalone (no HPVC)"
+      },
+      "setup_use_hpvc_sources": {
+        "name": "Setup: PV and grid from HPVC"
+      },
+      "setup_use_irradiance": {
+        "name": "Setup: weather station"
+      },
+      "report_ready": {
+        "name": "Report ready"
+      },
+      "kick_hand_back": {
+        "name": "Kickstart hand-back in progress"
+      }
+    },
+    "switch": {
+      "shadow_mode": {
+        "name": "Shadow mode"
+      },
+      "use_weather_station": {
+        "name": "Use local weather station"
+      },
+      "use_hpvc": {
+        "name": "Use HPVC"
+      },
+      "pv_and_grid_from_hpvc": {
+        "name": "PV & grid from HPVC"
+      },
+      "enabled": {
+        "name": "HESC enabled"
+      },
+      "plan_enabled": {
+        "name": "Charge plan"
+      },
+      "rep_enabled": {
+        "name": "Repeating plan"
+      },
+      "rep_mon": {
+        "name": "Repeating plan Monday"
+      },
+      "rep_tue": {
+        "name": "Repeating plan Tuesday"
+      },
+      "rep_wed": {
+        "name": "Repeating plan Wednesday"
+      },
+      "rep_thu": {
+        "name": "Repeating plan Thursday"
+      },
+      "rep_fri": {
+        "name": "Repeating plan Friday"
+      },
+      "rep_sat": {
+        "name": "Repeating plan Saturday"
+      },
+      "rep_sun": {
+        "name": "Repeating plan Sunday"
+      },
+      "vacation": {
+        "name": "Holiday mode"
+      },
+      "plan_opportunity": {
+        "name": "Charge plan: take cheap chances"
+      },
+      "min_charge_enabled": {
+        "name": "Minimum charge"
+      },
+      "kick_enabled": {
+        "name": "Home battery and EV (kickstart)"
+      },
+      "costs_all_in": {
+        "name": "Costs: price is all-in"
+      },
+      "morning_summary": {
+        "name": "Morning summary"
+      },
+      "show_advice": {
+        "name": "Show advice"
+      },
+      "show_charger_fields": {
+        "name": "Show charger fields"
+      },
+      "show_costs_settings": {
+        "name": "Show cost settings"
+      },
+      "show_kick_settings": {
+        "name": "Show kickstart settings"
+      },
+      "show_min_charge_settings": {
+        "name": "Show minimum charge settings"
+      },
+      "show_optional": {
+        "name": "Show optional settings"
+      },
+      "show_plan_settings": {
+        "name": "Show charge plan settings"
+      },
+      "show_thresholds": {
+        "name": "Show thresholds"
+      },
+      "show_timing": {
+        "name": "Show timing"
+      },
+      "show_weather_settings": {
+        "name": "Show weather station settings"
+      },
+      "edit_sources": {
+        "name": "Change automatic sources"
+      },
+      "costs_enabled": {
+        "name": "Charging costs page"
+      },
+      "advice_auto": {
+        "name": "Apply advice automatically"
+      },
+      "seasonal_threshold": {
+        "name": "Seasonal start threshold"
+      }
+    },
+    "number": {
+      "p_start": {
+        "name": "Forecast power to start"
+      },
+      "p_hold": {
+        "name": "Forecast power to hold"
+      },
+      "irr_start": {
+        "name": "Irradiance to start"
+      },
+      "irr_hold": {
+        "name": "Irradiance to hold"
+      },
+      "t_stable": {
+        "name": "Conditions stable before release"
+      },
+      "t_start": {
+        "name": "Wait for charger to start"
+      },
+      "t_dip": {
+        "name": "Allowed solar dip"
+      },
+      "t_stop": {
+        "name": "Charger stopped before restore"
+      },
+      "t_max": {
+        "name": "Maximum release duration"
+      },
+      "cooldown": {
+        "name": "Cooldown after release"
+      },
+      "max_attempts": {
+        "name": "Failed releases per day (max)"
+      },
+      "ev_active_w": {
+        "name": "EV charging threshold"
+      },
+      "ev_full_soc": {
+        "name": "EV full at battery level"
+      },
+      "plan_opportunity_price": {
+        "name": "Charge plan opportunity price"
+      },
+      "min_charge_soc": {
+        "name": "Minimum charge level"
+      },
+      "min_charge_hours": {
+        "name": "Minimum charge within"
+      },
+      "plan_final_check_min": {
+        "name": "Charge plan final check before ready-by time"
+      },
+      "ev_battery_kwh": {
+        "name": "EV usable battery capacity"
+      },
+      "plan_charge_kw": {
+        "name": "Charge plan grid charging power"
+      },
+      "home_battery_kwh": {
+        "name": "Home battery size (all together)"
+      },
+      "kick_max_per_day": {
+        "name": "Kickstarts per day (max)"
+      },
+      "kick_min_ev_kwh": {
+        "name": "Kickstart: minimum sun left for the EV"
+      },
+      "costs_markup": {
+        "name": "Costs: mark-up per kWh (energy tax + supplier)"
+      },
+      "costs_vat": {
+        "name": "Costs: VAT"
+      },
+      "feed_in_price": {
+        "name": "Feed-in compensation"
+      },
+      "advice_window_days": {
+        "name": "Advice based on last"
+      },
+      "advice_min_runs": {
+        "name": "Advice minimum sessions"
+      }
+    },
+    "select": {
+      "plan_day": {
+        "name": "Charge plan day"
+      },
+      "plan_time": {
+        "name": "Charge plan time"
+      },
+      "plan_goal": {
+        "name": "Charge plan goal"
+      },
+      "rep_time": {
+        "name": "Repeating plan time"
+      },
+      "rep_goal": {
+        "name": "Repeating plan goal"
+      },
+      "price_source": {
+        "name": "Price source"
+      },
+      "currency": {
+        "name": "Currency"
+      },
+      "price_resolution": {
+        "name": "Price resolution"
+      },
+      "morning_summary_time": {
+        "name": "Morning summary time"
+      },
+      "costs_period": {
+        "name": "Charging costs period"
+      },
+      "notify_pick": {
+        "name": "Notifications: add or remove a phone"
+      },
+      "charger_type": {
+        "name": "Charger type"
+      },
+      "charge_now": {
+        "name": "Charge now to"
+      }
+    },
+    "datetime": {
+      "plan_deadline": {
+        "name": "Charge plan ready by"
+      }
+    },
+    "date": {
+      "vacation_until": {
+        "name": "Holiday until"
+      },
+      "rep_skip": {
+        "name": "Skip repeating plan on"
+      }
+    },
+    "text": {
+      "price_sensor": {
+        "name": "Day-ahead price sensor"
+      },
+      "charger_grid_mode_value": {
+        "name": "Charger 'charge now' mode value"
+      },
+      "notify_services": {
+        "name": "Notify services"
+      },
+      "home_battery_soc_sensors": {
+        "name": "Home battery level sensors"
+      },
+      "home_battery_power_sensors": {
+        "name": "Home battery power sensors"
+      }
+    }
+  },
+  "issues": {
+    "no_solar_forecast": {
+      "title": "HESC works without a solar forecast",
+      "description": "HESC now plans grid charging on prices only and charges on the sun it measures (PV power, or your irradiance / lux sensor). The charge plan counts no sun, so it never charges too late, and the kickstart is off.\n\nWith a solar forecast HESC plans smarter. Install one of these and choose its sensors in HESC's setup (Settings → Devices & services → HESC → Configure → Sources):\n- **Solcast PV Forecast** (HACS, recommended): forecast now, in 30 minutes and today.\n- **Open-Meteo Solar Forecast** (HACS): turn on its sensor \"power production next 30 minutes\".\n- **Forecast.Solar** (built in): HESC reads its forecast series itself.\n\nThis note disappears once a forecast is chosen."
+    },
+    "dashboard_url_taken": {
+      "title": "HESC dashboard not added: {url} is already in use",
+      "description": "HESC brings its own dashboard (sidebar: **HESC**, address {url}). Another dashboard already uses that address, probably one you made yourself by pasting HESC's YAML. HESC leaves that dashboard alone.\n\nTo use the dashboard that comes with HESC (it is updated together with HESC): delete your own dashboard under Settings → Dashboards, then reload HESC (Settings → Devices & services → HESC v3 → ⋮ → Reload) or restart Home Assistant. If the address comes from configuration.yaml or another integration, free it there.\n\nTo keep your own dashboard: ignore this notice."
+    }
+  },
+  "services": {
+    "set_charge_plan": {
+      "name": "Set charge plan",
+      "description": "Sets the one-off charge plan (ready by, goal) and switches it on. For a Siri shortcut, a notification button or the Apple Watch.",
+      "fields": {
+        "day": {
+          "name": "Day",
+          "description": "Ready on this day: Today, Tomorrow or Mon … Sun. Left out: the day already set."
+        },
+        "time": {
+          "name": "Time",
+          "description": "Ready at this time, a whole or half hour (for example 07:00). Left out: the time already set."
+        },
+        "goal": {
+          "name": "Goal",
+          "description": "Battery level to reach: 50 to 100 %, in steps of 5. Left out: the goal already set."
+        }
+      }
+    },
+    "charge_plan_off": {
+      "name": "Charge plan off",
+      "description": "Switches the one-off charge plan off."
+    },
+    "skip_plan_day": {
+      "name": "Skip a day of the repeating plan",
+      "description": "The repeating plan does nothing on one day (a day off); the plan itself stays as it is. Without a date: the next day the plan would charge for.",
+      "fields": {
+        "date": {
+          "name": "Date",
+          "description": "The day to skip. Left out: the next day of the repeating plan."
+        }
+      }
+    },
+    "undo_skip_plan_day": {
+      "name": "Undo skipping a day",
+      "description": "The repeating plan charges again on the day that was skipped."
+    },
+    "charge_now": {
+      "name": "Charge now",
+      "description": "Charges from the grid now until the EV reaches the goal, then the charger goes back to its own solar mode. Stops by itself when the EV is unplugged.",
+      "fields": {
+        "goal": {
+          "name": "Goal",
+          "description": "Battery level to reach: 50 to 100 %, in steps of 5."
+        }
+      }
+    },
+    "charge_now_off": {
+      "name": "Stop charge now",
+      "description": "Stops \"charge now\"; the charger goes back to its own solar mode. A planned grid charge is not affected."
+    }
+  },
+  "exceptions": {
+    "bad_plan_time": {
+      "message": "Time {time} is not possible: use a whole or half hour, for example 07:00 or 07:30."
+    },
+    "not_loaded": {
+      "message": "HESC is not set up or not running."
+    },
+    "no_repeating_day": {
+      "message": "The repeating plan is off or has no day set: there is no day to skip."
+    },
+    "skip_in_past": {
+      "message": "{date} has already passed."
+    },
+    "charge_now_shadow": {
+      "message": "Shadow mode is on: HESC v3 switches nothing, so it cannot charge now."
+    },
+    "ev_not_connected": {
+      "message": "The EV is not plugged in."
+    },
+    "no_battery_level": {
+      "message": "HESC does not know the EV battery level, so it cannot tell when the goal is reached."
+    },
+    "charge_now_close": {
+      "message": "The EV is already at {soc}%: less than 3% below {goal}% or above it, so HESC does not start charging."
+    },
+    "grid_not_set_up": {
+      "message": "Grid charging is not set up (a start/stop switch, or a mode entity with a 'charge now' value), so HESC cannot charge now."
+    }
+  }
+}

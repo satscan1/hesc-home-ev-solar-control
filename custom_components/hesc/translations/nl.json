@@ -1,0 +1,803 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Laadpaal",
+        "description": "Kies het type laadpaal. HESC v3 begint in schaduwmodus: het leest alles en schakelt niets.",
+        "data": {
+          "charger_type": "Type laadpaal"
+        },
+        "data_description": {
+          "charger_type": "Vult de merkwaarden in en, waar er precies één gevonden wordt, de entiteiten van de laadpaal (zoals in v2)."
+        }
+      },
+      "sources": {
+        "title": "Bronnen",
+        "description": "Zonnestroom, netvermogen en de zonverwachting.",
+        "data": {
+          "use_hpvc_sources": "Zonnestroom en netvermogen uit HPVC",
+          "pv_power_sensor": "Zonnestroom",
+          "grid_power_sensor": "Netvermogen",
+          "grid_export_positive": "Netsensor: teruglevering is positief",
+          "forecast_now_sensor": "Zonverwachting nu",
+          "forecast_30m_sensor": "Zonverwachting over 30 minuten",
+          "forecast_attribute": "Attribuut van de verwachting",
+          "solar_today_sensor": "Zonverwachting vandaag",
+          "solar_tomorrow_sensor": "Zonverwachting morgen",
+          "use_irradiance": "Eigen weerstation gebruiken",
+          "irradiance_sensor": "Zonlichtsensor",
+          "grid_power_l1_sensor": "Netvermogen fase 1",
+          "grid_power_l2_sensor": "Netvermogen fase 2",
+          "grid_power_l3_sensor": "Netvermogen fase 3"
+        },
+        "data_description": {
+          "use_hpvc_sources": "Gebruik de sensoren voor zonnestroom en net die in HPVC gekozen zijn, als HPVC die heeft (zoals in v2). Anders geldt je eigen keuze hieronder.",
+          "pv_power_sensor": "W of kW; kW wordt omgerekend. Niet nodig als HPVC hem levert.",
+          "grid_power_sensor": "Niet verplicht. W of kW.",
+          "grid_export_positive": "Zet aan als je netsensor teruglevering als positief getal toont.",
+          "forecast_attribute": "Attribuut om te lezen in plaats van de toestand; leeg = de toestand gebruiken.",
+          "solar_today_sensor": "Niet verplicht. Solcast (attribuut detailedForecast) of Open-Meteo Solar Forecast (attribuut watts).",
+          "solar_tomorrow_sensor": "Niet verplicht.",
+          "irradiance_sensor": "W/m², of een luxmeter (lx wordt omgerekend, ongeveer 120 lx per W/m²); nodig als het weerstation gebruikt wordt.",
+          "forecast_now_sensor": "Niet verplicht. Laat leeg als je geen zonverwachting hebt: HESC plant dan op prijzen en laadt op gemeten zon.",
+          "grid_power_l1_sensor": "Niet verplicht, voor het fase-advies: het netvermogen per fase van je meter (W of kW, netto). Het plus- of minteken zoekt HESC zelf uit.",
+          "grid_power_l2_sensor": "Niet verplicht, zie fase 1.",
+          "grid_power_l3_sensor": "Niet verplicht, zie fase 1."
+        }
+      },
+      "ev": {
+        "title": "Elektrische auto",
+        "description": "Hoe HESC de auto ziet.\n\n{soc_hint}",
+        "data": {
+          "ev_connected_sensor": "Auto aangesloten",
+          "ev_disconnected_values": "Waarden die 'geen auto' betekenen",
+          "ev_power_sensor": "Laadvermogen",
+          "ev_soc_sensor": "Accustand auto",
+          "ev_green_energy_sensor": "Groene energie auto"
+        },
+        "data_description": {
+          "ev_disconnected_values": "Gescheiden door komma's, hoofdletters maken niet uit.",
+          "ev_power_sensor": "W of kW; kW wordt omgerekend.",
+          "ev_soc_sensor": "Aanbevolen. Voor het laaddoel, de minimumlading en 'auto vol'. Zonder deze sensor plant HESC alleen in kWh.",
+          "ev_green_energy_sensor": "Niet verplicht."
+        }
+      },
+      "charger": {
+        "title": "Entiteiten van de laadpaal",
+        "description": "Hoe HESC de zonnestand van de laadpaal ziet.",
+        "data": {
+          "charger_mode_entity": "Entiteit voor de laadstand",
+          "charger_eco_values": "Waarde(n) voor de zonnestand",
+          "charger_solar_switch_entity": "Zonneschakelaar",
+          "charger_start_stop_entity": "Start/stop-entiteit",
+          "charger_resume_entity": "Hervatten-entiteit",
+          "charger_current_entity": "Laadstroom"
+        },
+        "data_description": {
+          "charger_eco_values": "Waarden van de laadstand, gescheiden door komma's, die betekenen dat de laadpaal in zijn zonnestand staat.",
+          "charger_solar_switch_entity": "Niet verplicht; alleen voor laadpalen die ook een schakelaar nodig hebben om op zon te laden.",
+          "charger_start_stop_entity": "Niet verplicht.",
+          "charger_resume_entity": "Niet verplicht.",
+          "charger_current_entity": "Niet verplicht. Hiermee zet HESC de laadpaal lager terwijl hij van het net laadt, zodat meer van de lading uit de zon komt (de auto is nog steeds op tijd vol). Wallbox: \"Maximum charging current\" (daarvoor is een Wallbox-beheerdersaccount nodig)."
+        }
+      },
+      "hpvc": {
+        "title": "HPVC",
+        "description": "HESC werkt samen met HPVC, of op zichzelf.",
+        "data": {
+          "standalone": "Zonder HPVC (standalone)",
+          "hpvc_enabled_entity": "Entiteit 'HPVC aan'",
+          "hpvc_limited_entity": "Entiteit 'HPVC begrenst'"
+        }
+      }
+    },
+    "error": {
+      "irradiance_required": "Kies een zonlichtsensor, of zet het weerstation uit.",
+      "eco_values_required": "Vul minstens één waarde voor de zonnestand in.",
+      "hpvc_required": "Kies de entiteiten van HPVC, of zet standalone aan.",
+      "pv_required": "Kies een sensor voor zonnestroom, of neem hem uit HPVC.",
+      "phases_all_or_none": "Kies alle drie de fasen (drie verschillende sensoren), of laat alle drie leeg."
+    },
+    "abort": {
+      "already_configured": "HESC v3 is al ingesteld.",
+      "single_instance_allowed": "HESC v3 is al ingesteld."
+    }
+  },
+  "options": {
+    "step": {
+      "sources": {
+        "title": "Bronnen",
+        "description": "Zonnestroom, netvermogen en de zonverwachting.",
+        "data": {
+          "use_hpvc_sources": "Zonnestroom en netvermogen uit HPVC",
+          "pv_power_sensor": "Zonnestroom",
+          "grid_power_sensor": "Netvermogen",
+          "grid_export_positive": "Netsensor: teruglevering is positief",
+          "forecast_now_sensor": "Zonverwachting nu",
+          "forecast_30m_sensor": "Zonverwachting over 30 minuten",
+          "forecast_attribute": "Attribuut van de verwachting",
+          "solar_today_sensor": "Zonverwachting vandaag",
+          "solar_tomorrow_sensor": "Zonverwachting morgen",
+          "use_irradiance": "Eigen weerstation gebruiken",
+          "irradiance_sensor": "Zonlichtsensor",
+          "grid_power_l1_sensor": "Netvermogen fase 1",
+          "grid_power_l2_sensor": "Netvermogen fase 2",
+          "grid_power_l3_sensor": "Netvermogen fase 3"
+        },
+        "data_description": {
+          "use_hpvc_sources": "Gebruik de sensoren voor zonnestroom en net die in HPVC gekozen zijn, als HPVC die heeft (zoals in v2). Anders geldt je eigen keuze hieronder.",
+          "pv_power_sensor": "W of kW; kW wordt omgerekend. Niet nodig als HPVC hem levert.",
+          "grid_power_sensor": "Niet verplicht. W of kW.",
+          "grid_export_positive": "Zet aan als je netsensor teruglevering als positief getal toont.",
+          "forecast_attribute": "Attribuut om te lezen in plaats van de toestand; leeg = de toestand gebruiken.",
+          "solar_today_sensor": "Niet verplicht. Solcast (attribuut detailedForecast) of Open-Meteo Solar Forecast (attribuut watts).",
+          "solar_tomorrow_sensor": "Niet verplicht.",
+          "irradiance_sensor": "W/m², of een luxmeter (lx wordt omgerekend, ongeveer 120 lx per W/m²); nodig als het weerstation gebruikt wordt.",
+          "forecast_now_sensor": "Niet verplicht. Laat leeg als je geen zonverwachting hebt: HESC plant dan op prijzen en laadt op gemeten zon.",
+          "grid_power_l1_sensor": "Niet verplicht, voor het fase-advies: het netvermogen per fase van je meter (W of kW, netto). Het plus- of minteken zoekt HESC zelf uit.",
+          "grid_power_l2_sensor": "Niet verplicht, zie fase 1.",
+          "grid_power_l3_sensor": "Niet verplicht, zie fase 1."
+        }
+      },
+      "ev": {
+        "title": "Elektrische auto",
+        "description": "Hoe HESC de auto ziet.\n\n{soc_hint}",
+        "data": {
+          "ev_connected_sensor": "Auto aangesloten",
+          "ev_disconnected_values": "Waarden die 'geen auto' betekenen",
+          "ev_power_sensor": "Laadvermogen",
+          "ev_soc_sensor": "Accustand auto",
+          "ev_green_energy_sensor": "Groene energie auto"
+        },
+        "data_description": {
+          "ev_disconnected_values": "Gescheiden door komma's, hoofdletters maken niet uit.",
+          "ev_power_sensor": "W of kW; kW wordt omgerekend.",
+          "ev_soc_sensor": "Aanbevolen. Voor het laaddoel, de minimumlading en 'auto vol'. Zonder deze sensor plant HESC alleen in kWh.",
+          "ev_green_energy_sensor": "Niet verplicht."
+        }
+      },
+      "charger": {
+        "title": "Entiteiten van de laadpaal",
+        "description": "Hoe HESC de zonnestand van de laadpaal ziet.",
+        "data": {
+          "charger_mode_entity": "Entiteit voor de laadstand",
+          "charger_eco_values": "Waarde(n) voor de zonnestand",
+          "charger_solar_switch_entity": "Zonneschakelaar",
+          "charger_start_stop_entity": "Start/stop-entiteit",
+          "charger_resume_entity": "Hervatten-entiteit",
+          "charger_current_entity": "Laadstroom"
+        },
+        "data_description": {
+          "charger_eco_values": "Waarden van de laadstand, gescheiden door komma's, die betekenen dat de laadpaal in zijn zonnestand staat.",
+          "charger_solar_switch_entity": "Niet verplicht; alleen voor laadpalen die ook een schakelaar nodig hebben om op zon te laden.",
+          "charger_start_stop_entity": "Niet verplicht.",
+          "charger_resume_entity": "Niet verplicht.",
+          "charger_current_entity": "Niet verplicht. Hiermee zet HESC de laadpaal lager terwijl hij van het net laadt, zodat meer van de lading uit de zon komt (de auto is nog steeds op tijd vol). Wallbox: \"Maximum charging current\" (daarvoor is een Wallbox-beheerdersaccount nodig)."
+        }
+      },
+      "hpvc": {
+        "title": "HPVC",
+        "description": "HESC werkt samen met HPVC, of op zichzelf.",
+        "data": {
+          "standalone": "Zonder HPVC (standalone)",
+          "hpvc_enabled_entity": "Entiteit 'HPVC aan'",
+          "hpvc_limited_entity": "Entiteit 'HPVC begrenst'"
+        }
+      },
+      "init": {
+        "title": "Laadpaal",
+        "description": "Kies het type laadpaal opnieuw. Merkwaarden worden alleen vervangen als je van het ene merk naar het andere overstapt; lege velden van de laadpaal worden opnieuw gezocht (zoals in v2).",
+        "data": {
+          "charger_type": "Type laadpaal"
+        }
+      }
+    },
+    "error": {
+      "irradiance_required": "Kies een zonlichtsensor, of zet het weerstation uit.",
+      "eco_values_required": "Vul minstens één waarde voor de zonnestand in.",
+      "hpvc_required": "Kies de entiteiten van HPVC, of zet standalone aan.",
+      "pv_required": "Kies een sensor voor zonnestroom, of neem hem uit HPVC.",
+      "phases_all_or_none": "Kies alle drie de fasen (drie verschillende sensoren), of laat alle drie leeg."
+    }
+  },
+  "entity": {
+    "button": {
+      "costs_export": {
+        "name": "Laadkosten exporteren"
+      },
+      "settings_backup": {
+        "name": "Back-up van instellingen"
+      },
+      "settings_restore": {
+        "name": "Instellingen terugzetten"
+      },
+      "settings_reset": {
+        "name": "Instellingen naar standaardwaarden"
+      },
+      "notify_test": {
+        "name": "Testmelding sturen"
+      },
+      "generate_report": {
+        "name": "Rapport maken"
+      },
+      "take_over_v2": {
+        "name": "Instellingen en geschiedenis van v2 overnemen"
+      },
+      "charger_search": {
+        "name": "Entiteiten van de laadpaal opnieuw zoeken"
+      },
+      "charge_now_plan_goal": {
+        "name": "Nu laden tot het laaddoel van het plan"
+      },
+      "charge_now_stop": {
+        "name": "Nu laden stoppen"
+      },
+      "skip_next_day": {
+        "name": "Volgende dag van het weekplan overslaan"
+      },
+      "undo_skip_day": {
+        "name": "Overslaan van een dag ongedaan maken"
+      },
+      "plan_off": {
+        "name": "Laadplan uit"
+      }
+    },
+    "sensor": {
+      "pv_power": {
+        "name": "Zonnestroom"
+      },
+      "grid_power": {
+        "name": "Netvermogen"
+      },
+      "ev_power": {
+        "name": "Laadvermogen auto"
+      },
+      "forecast_now": {
+        "name": "Zonverwachting nu"
+      },
+      "forecast_30m": {
+        "name": "Zonverwachting over 30 minuten"
+      },
+      "irradiance": {
+        "name": "Zonlicht"
+      },
+      "ev_soc": {
+        "name": "Accustand auto"
+      },
+      "charger_mode": {
+        "name": "Laadstand laadpaal"
+      },
+      "missing_inputs": {
+        "name": "Ontbrekende invoer"
+      },
+      "state": {
+        "name": "Toestand"
+      },
+      "reason": {
+        "name": "Reden"
+      },
+      "last_action": {
+        "name": "Laatste actie"
+      },
+      "insight_today": {
+        "name": "Vandaag"
+      },
+      "insight_accuracy": {
+        "name": "Nauwkeurigheid vandaag"
+      },
+      "insight_now": {
+        "name": "Nu"
+      },
+      "plan_status": {
+        "name": "Status laadplan"
+      },
+      "kick_status": {
+        "name": "Status thuisbatterij en auto"
+      },
+      "costs_export_info": {
+        "name": "Export laadkosten"
+      },
+      "charging_costs": {
+        "name": "Laadkosten"
+      },
+      "prices": {
+        "name": "Prijzen"
+      },
+      "charge_plan": {
+        "name": "Laadplan"
+      },
+      "price_forecast": {
+        "name": "Prijsverwachting"
+      },
+      "expected_charge_cost": {
+        "name": "Verwachte laadkosten"
+      },
+      "holidays": {
+        "name": "Feestdagen"
+      },
+      "ev_battery_level": {
+        "name": "Accustand auto met reserves"
+      },
+      "notice": {
+        "name": "Melding"
+      },
+      "settings_backup_info": {
+        "name": "Info back-up van instellingen"
+      },
+      "solar_still_to_come_today": {
+        "name": "Zon die vandaag nog komt"
+      },
+      "notification_phones": {
+        "name": "Telefoons voor meldingen"
+      },
+      "diag_pv_power": {
+        "name": "Zonnestroom (diagnose)"
+      },
+      "diag_ev_power": {
+        "name": "Laadvermogen (diagnose)"
+      },
+      "diag_forecast_power": {
+        "name": "Verwacht vermogen (diagnose)"
+      },
+      "diag_forecast_cautious": {
+        "name": "Verwacht vermogen, voorzichtig (diagnose)"
+      },
+      "diag_irradiance": {
+        "name": "Zonlicht (diagnose)"
+      },
+      "charger_profile": {
+        "name": "Profiel laadpaal"
+      },
+      "setup": {
+        "name": "Instelscherm"
+      },
+      "compare": {
+        "name": "Verschillen met v2 vandaag"
+      },
+      "advice_threshold": {
+        "name": "Geadviseerde startdrempel"
+      },
+      "advice": {
+        "name": "Advies"
+      },
+      "advice_updated": {
+        "name": "Advies bijgewerkt"
+      },
+      "report_generated": {
+        "name": "Rapport gemaakt"
+      },
+      "forecast_source": {
+        "name": "Bron zonverwachting",
+        "state": {
+          "solcast": "Solcast",
+          "series": "Verwachtingsreeks (Open-Meteo / Forecast.Solar)",
+          "sensors": "Verwachtingssensoren",
+          "none": "Geen verwachting"
+        }
+      },
+      "current_status": {
+        "name": "Laadvermogen volgt de zon"
+      },
+      "phase_advice": {
+        "name": "Fase-advies",
+        "state": {
+          "not_available": "Niet beschikbaar",
+          "measuring": "Aan het meten",
+          "provisional": "Voorlopig",
+          "confirmed": "Bevestigd"
+        }
+      },
+      "summary": {
+        "name": "Samenvatting voor telefoon en horloge"
+      }
+    },
+    "binary_sensor": {
+      "inputs_valid": {
+        "name": "Invoer geldig"
+      },
+      "ev_connected": {
+        "name": "Auto aangesloten"
+      },
+      "charger_solar_mode": {
+        "name": "Laadpaal in zonnestand"
+      },
+      "hpvc_limiting": {
+        "name": "HPVC begrenst"
+      },
+      "diag_ev_connected": {
+        "name": "Auto aangesloten (diagnose)"
+      },
+      "diag_charger_solar_mode": {
+        "name": "Laadpaal in zonnestand (diagnose)"
+      },
+      "diag_release_active": {
+        "name": "Vrijgave actief (diagnose)"
+      },
+      "configuration_valid": {
+        "name": "Configuratie geldig"
+      },
+      "prices_available": {
+        "name": "Prijzen beschikbaar"
+      },
+      "check_charger": {
+        "name": "Controle: laadpaal"
+      },
+      "check_sources": {
+        "name": "Controle: bronnen"
+      },
+      "check_weather_station": {
+        "name": "Controle: weerstation"
+      },
+      "check_charge_plan": {
+        "name": "Controle: laadplan"
+      },
+      "check_home_battery_and_ev": {
+        "name": "Controle: thuisbatterij en auto"
+      },
+      "setup_standalone": {
+        "name": "Instelling: standalone (geen HPVC)"
+      },
+      "setup_use_hpvc_sources": {
+        "name": "Instelling: zonnestroom en net uit HPVC"
+      },
+      "setup_use_irradiance": {
+        "name": "Instelling: weerstation"
+      },
+      "report_ready": {
+        "name": "Rapport klaar"
+      },
+      "kick_hand_back": {
+        "name": "Kickstart: overdracht bezig"
+      }
+    },
+    "switch": {
+      "shadow_mode": {
+        "name": "Schaduwmodus"
+      },
+      "use_weather_station": {
+        "name": "Eigen weerstation gebruiken"
+      },
+      "use_hpvc": {
+        "name": "HPVC gebruiken"
+      },
+      "pv_and_grid_from_hpvc": {
+        "name": "Zonnestroom en net uit HPVC"
+      },
+      "enabled": {
+        "name": "HESC aan"
+      },
+      "plan_enabled": {
+        "name": "Laadplan"
+      },
+      "rep_enabled": {
+        "name": "Weekplan"
+      },
+      "rep_mon": {
+        "name": "Weekplan maandag"
+      },
+      "rep_tue": {
+        "name": "Weekplan dinsdag"
+      },
+      "rep_wed": {
+        "name": "Weekplan woensdag"
+      },
+      "rep_thu": {
+        "name": "Weekplan donderdag"
+      },
+      "rep_fri": {
+        "name": "Weekplan vrijdag"
+      },
+      "rep_sat": {
+        "name": "Weekplan zaterdag"
+      },
+      "rep_sun": {
+        "name": "Weekplan zondag"
+      },
+      "vacation": {
+        "name": "Vakantiemodus"
+      },
+      "plan_opportunity": {
+        "name": "Laadplan: goedkope kansen pakken"
+      },
+      "min_charge_enabled": {
+        "name": "Minimumlading"
+      },
+      "kick_enabled": {
+        "name": "Thuisbatterij en auto (kickstart)"
+      },
+      "costs_all_in": {
+        "name": "Kosten: prijs is all-in"
+      },
+      "morning_summary": {
+        "name": "Ochtendoverzicht"
+      },
+      "show_advice": {
+        "name": "Advies tonen"
+      },
+      "show_charger_fields": {
+        "name": "Velden laadpaal tonen"
+      },
+      "show_costs_settings": {
+        "name": "Instellingen kosten tonen"
+      },
+      "show_kick_settings": {
+        "name": "Instellingen kickstart tonen"
+      },
+      "show_min_charge_settings": {
+        "name": "Instellingen minimumlading tonen"
+      },
+      "show_optional": {
+        "name": "Extra instellingen tonen"
+      },
+      "show_plan_settings": {
+        "name": "Instellingen laadplan en meldingen tonen"
+      },
+      "show_thresholds": {
+        "name": "Laaddrempels tonen"
+      },
+      "show_timing": {
+        "name": "Tijden tonen"
+      },
+      "show_weather_settings": {
+        "name": "Instellingen weerstation tonen"
+      },
+      "edit_sources": {
+        "name": "Automatische bronnen wijzigen"
+      },
+      "costs_enabled": {
+        "name": "Pagina laadkosten"
+      },
+      "advice_auto": {
+        "name": "Advies automatisch toepassen"
+      },
+      "seasonal_threshold": {
+        "name": "Startdrempel per seizoen"
+      }
+    },
+    "number": {
+      "p_start": {
+        "name": "Verwacht vermogen om te starten"
+      },
+      "p_hold": {
+        "name": "Verwacht vermogen om door te laden"
+      },
+      "irr_start": {
+        "name": "Zonlicht om te starten"
+      },
+      "irr_hold": {
+        "name": "Zonlicht om door te laden"
+      },
+      "t_stable": {
+        "name": "Omstandigheden stabiel voor vrijgave"
+      },
+      "t_start": {
+        "name": "Wachten tot de laadpaal start"
+      },
+      "t_dip": {
+        "name": "Toegestane zondip"
+      },
+      "t_stop": {
+        "name": "Laadpaal gestopt voor herstel"
+      },
+      "t_max": {
+        "name": "Langste vrijgave"
+      },
+      "cooldown": {
+        "name": "Afkoeltijd na vrijgave"
+      },
+      "max_attempts": {
+        "name": "Mislukte vrijgaven per dag (max)"
+      },
+      "ev_active_w": {
+        "name": "Drempel auto laadt"
+      },
+      "ev_full_soc": {
+        "name": "Auto vol bij accustand"
+      },
+      "plan_opportunity_price": {
+        "name": "Laadplan: prijs voor een goedkope kans"
+      },
+      "min_charge_soc": {
+        "name": "Minimale accustand"
+      },
+      "min_charge_hours": {
+        "name": "Minimumlading binnen"
+      },
+      "plan_final_check_min": {
+        "name": "Laadplan: eindcontrole voor de klaar-tijd"
+      },
+      "ev_battery_kwh": {
+        "name": "Bruikbare accucapaciteit auto"
+      },
+      "plan_charge_kw": {
+        "name": "Laadplan: laadvermogen van het net"
+      },
+      "home_battery_kwh": {
+        "name": "Grootte thuisbatterij (alles samen)"
+      },
+      "kick_max_per_day": {
+        "name": "Kickstarts per dag (max)"
+      },
+      "kick_min_ev_kwh": {
+        "name": "Kickstart: minimale zon over voor de auto"
+      },
+      "costs_markup": {
+        "name": "Kosten: opslag per kWh (energiebelasting + leverancier)"
+      },
+      "costs_vat": {
+        "name": "Kosten: btw"
+      },
+      "feed_in_price": {
+        "name": "Terugleververgoeding"
+      },
+      "advice_window_days": {
+        "name": "Advies op basis van de laatste"
+      },
+      "advice_min_runs": {
+        "name": "Advies: minimaal aantal sessies"
+      }
+    },
+    "select": {
+      "plan_day": {
+        "name": "Laadplan: dag"
+      },
+      "plan_time": {
+        "name": "Laadplan: tijd"
+      },
+      "plan_goal": {
+        "name": "Laadplan: laaddoel"
+      },
+      "rep_time": {
+        "name": "Weekplan: tijd"
+      },
+      "rep_goal": {
+        "name": "Weekplan: laaddoel"
+      },
+      "price_source": {
+        "name": "Prijsbron"
+      },
+      "currency": {
+        "name": "Valuta"
+      },
+      "price_resolution": {
+        "name": "Prijzen per"
+      },
+      "morning_summary_time": {
+        "name": "Tijd ochtendoverzicht"
+      },
+      "costs_period": {
+        "name": "Periode laadkosten"
+      },
+      "notify_pick": {
+        "name": "Meldingen: telefoon toevoegen of weghalen"
+      },
+      "charger_type": {
+        "name": "Type laadpaal"
+      },
+      "charge_now": {
+        "name": "Nu laden tot"
+      }
+    },
+    "datetime": {
+      "plan_deadline": {
+        "name": "Laadplan klaar op"
+      }
+    },
+    "date": {
+      "vacation_until": {
+        "name": "Vakantie tot"
+      },
+      "rep_skip": {
+        "name": "Weekplan overslaan op"
+      }
+    },
+    "text": {
+      "price_sensor": {
+        "name": "Sensor dagprijzen"
+      },
+      "charger_grid_mode_value": {
+        "name": "Waarde laadstand 'nu laden'"
+      },
+      "notify_services": {
+        "name": "Meldingsdiensten"
+      },
+      "home_battery_soc_sensors": {
+        "name": "Sensoren accustand thuisbatterij"
+      },
+      "home_battery_power_sensors": {
+        "name": "Sensoren vermogen thuisbatterij"
+      }
+    }
+  },
+  "issues": {
+    "no_solar_forecast": {
+      "title": "HESC werkt zonder zonverwachting",
+      "description": "HESC plant netladen nu alleen op prijzen en laadt op de zon die het meet (zonnestroom, of je zonlicht- of luxsensor). Het laadplan rekent niet op zon, zodat het nooit te laat laadt, en de kickstart staat uit.\n\nMet een zonverwachting plant HESC slimmer. Installeer er een van deze en kies de sensoren in het instelscherm van HESC (Instellingen → Apparaten & diensten → HESC → Configureren → Bronnen):\n- **Solcast PV Forecast** (HACS, aanbevolen): verwachting nu, over 30 minuten en vandaag.\n- **Open-Meteo Solar Forecast** (HACS): zet de sensor \"power production next 30 minutes\" aan.\n- **Forecast.Solar** (ingebouwd): HESC leest de verwachtingsreeks zelf.\n\nDeze melding verdwijnt zodra er een verwachting gekozen is."
+    },
+    "dashboard_url_taken": {
+      "title": "HESC-dashboard niet toegevoegd: {url} is al in gebruik",
+      "description": "HESC brengt een eigen dashboard mee (zijbalk: **HESC**, adres {url}). Een ander dashboard gebruikt dat adres al, waarschijnlijk een dashboard dat je zelf hebt gemaakt door de YAML van HESC te plakken. HESC laat dat dashboard met rust.\n\nWil je het dashboard dat bij HESC hoort (het wordt samen met HESC bijgewerkt): verwijder je eigen dashboard bij Instellingen → Dashboards, en herlaad daarna HESC (Instellingen → Apparaten & diensten → HESC v3 → ⋮ → Herladen) of herstart Home Assistant. Komt het adres uit configuration.yaml of een andere integratie, maak het daar vrij.\n\nWil je je eigen dashboard houden: negeer deze melding."
+    }
+  },
+  "services": {
+    "set_charge_plan": {
+      "name": "Laadplan instellen",
+      "description": "Stelt het eenmalige laadplan in (klaar op, laaddoel) en zet het aan. Voor een Siri-opdracht, een knop in een melding of de Apple Watch.",
+      "fields": {
+        "day": {
+          "name": "Dag",
+          "description": "Klaar op deze dag: Today, Tomorrow of Mon … Sun. Weggelaten: de dag die al ingesteld is."
+        },
+        "time": {
+          "name": "Tijd",
+          "description": "Klaar op deze tijd, een heel of half uur (bijvoorbeeld 07:00). Weggelaten: de tijd die al ingesteld is."
+        },
+        "goal": {
+          "name": "Laaddoel",
+          "description": "Accustand die bereikt moet worden: 50 tot 100 %, in stappen van 5. Weggelaten: het laaddoel dat al ingesteld is."
+        }
+      }
+    },
+    "charge_plan_off": {
+      "name": "Laadplan uit",
+      "description": "Zet het eenmalige laadplan uit."
+    },
+    "skip_plan_day": {
+      "name": "Een dag van het weekplan overslaan",
+      "description": "Het weekplan doet op één dag niets (een vrije dag); het plan zelf blijft zoals het is. Zonder datum: de volgende dag waarvoor het plan zou laden.",
+      "fields": {
+        "date": {
+          "name": "Datum",
+          "description": "De dag die overgeslagen wordt. Weggelaten: de volgende dag van het weekplan."
+        }
+      }
+    },
+    "undo_skip_plan_day": {
+      "name": "Overslaan van een dag ongedaan maken",
+      "description": "Het weekplan laadt weer op de dag die overgeslagen was."
+    },
+    "charge_now": {
+      "name": "Nu laden",
+      "description": "Laadt nu van het net tot de auto het laaddoel haalt; daarna gaat de laadpaal terug naar zijn eigen zonnestand. Stopt vanzelf als de stekker uit de auto gaat.",
+      "fields": {
+        "goal": {
+          "name": "Laaddoel",
+          "description": "Accustand die bereikt moet worden: 50 tot 100 %, in stappen van 5."
+        }
+      }
+    },
+    "charge_now_off": {
+      "name": "Nu laden stoppen",
+      "description": "Stopt \"nu laden\"; de laadpaal gaat terug naar zijn eigen zonnestand. Een gepland netladen blijft zoals het is."
+    }
+  },
+  "exceptions": {
+    "bad_plan_time": {
+      "message": "Tijd {time} kan niet: gebruik een heel of half uur, bijvoorbeeld 07:00 of 07:30."
+    },
+    "not_loaded": {
+      "message": "HESC is niet ingesteld of draait niet."
+    },
+    "no_repeating_day": {
+      "message": "Het weekplan staat uit of heeft geen dag ingesteld: er is geen dag om over te slaan."
+    },
+    "skip_in_past": {
+      "message": "{date} is al voorbij."
+    },
+    "charge_now_shadow": {
+      "message": "De schaduwmodus staat aan: HESC v3 schakelt niets, dus kan het nu niet laden."
+    },
+    "ev_not_connected": {
+      "message": "De auto is niet aangesloten."
+    },
+    "no_battery_level": {
+      "message": "HESC kent de accustand van de auto niet, dus kan het niet zien wanneer het laaddoel gehaald is."
+    },
+    "charge_now_close": {
+      "message": "De auto staat al op {soc}%: minder dan 3% onder {goal}% of erboven, dus HESC begint niet met laden."
+    },
+    "grid_not_set_up": {
+      "message": "Netladen is niet ingesteld (een start/stop-schakelaar, of een laadstand-entiteit met een waarde voor 'nu laden'), dus HESC kan nu niet laden."
+    }
+  }
+}

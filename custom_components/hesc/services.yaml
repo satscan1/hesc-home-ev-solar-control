@@ -1,0 +1,59 @@
+set_charge_plan:
+  fields:
+    day:
+      required: false
+      example: Tomorrow
+      selector:
+        select:
+          options:
+            - Today
+            - Tomorrow
+            - Mon
+            - Tue
+            - Wed
+            - Thu
+            - Fri
+            - Sat
+            - Sun
+    time:
+      required: false
+      example: "07:00"
+      selector:
+        text:
+    goal:
+      required: false
+      example: 80
+      selector:
+        number:
+          min: 50
+          max: 100
+          step: 5
+          unit_of_measurement: "%"
+          mode: slider
+
+charge_plan_off:
+
+skip_plan_day:
+  fields:
+    date:
+      required: false
+      example: "2026-10-23"
+      selector:
+        date:
+
+undo_skip_plan_day:
+
+charge_now:
+  fields:
+    goal:
+      required: true
+      example: 90
+      selector:
+        number:
+          min: 50
+          max: 100
+          step: 5
+          unit_of_measurement: "%"
+          mode: slider
+
+charge_now_off:

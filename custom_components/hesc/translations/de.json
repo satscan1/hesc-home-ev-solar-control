@@ -1,0 +1,803 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Wallbox",
+        "description": "Wähle den Typ deiner Wallbox. HESC v3 startet im Schattenmodus: Es liest alles und schaltet nichts.",
+        "data": {
+          "charger_type": "Wallbox-Typ"
+        },
+        "data_description": {
+          "charger_type": "Füllt die Herstellerwerte aus und, wo genau eine gefunden wird, die Entitäten der Wallbox (wie in v2)."
+        }
+      },
+      "sources": {
+        "title": "Quellen",
+        "description": "Solarleistung, Netzleistung und die Solarprognose.",
+        "data": {
+          "use_hpvc_sources": "Solar- und Netzleistung aus HPVC",
+          "pv_power_sensor": "Solarleistung",
+          "grid_power_sensor": "Netzleistung",
+          "grid_export_positive": "Netzsensor: Einspeisung ist positiv",
+          "forecast_now_sensor": "Solarprognose jetzt",
+          "forecast_30m_sensor": "Solarprognose in 30 Minuten",
+          "forecast_attribute": "Attribut der Prognose",
+          "solar_today_sensor": "Solarprognose heute",
+          "solar_tomorrow_sensor": "Solarprognose morgen",
+          "use_irradiance": "Eigene Wetterstation verwenden",
+          "irradiance_sensor": "Einstrahlungssensor",
+          "grid_power_l1_sensor": "Netzleistung Phase 1",
+          "grid_power_l2_sensor": "Netzleistung Phase 2",
+          "grid_power_l3_sensor": "Netzleistung Phase 3"
+        },
+        "data_description": {
+          "use_hpvc_sources": "Die in HPVC gewählten Sensoren für Solar und Netz verwenden, wenn HPVC sie hat (wie in v2). Sonst gilt deine eigene Wahl unten.",
+          "pv_power_sensor": "W oder kW; kW wird umgerechnet. Nicht nötig, wenn HPVC ihn liefert.",
+          "grid_power_sensor": "Optional. W oder kW.",
+          "grid_export_positive": "Einschalten, wenn dein Netzsensor Einspeisung als positiven Wert zeigt.",
+          "forecast_attribute": "Attribut, das statt des Zustands gelesen wird; leer = den Zustand verwenden.",
+          "solar_today_sensor": "Optional. Solcast (Attribut detailedForecast) oder Open-Meteo Solar Forecast (Attribut watts).",
+          "solar_tomorrow_sensor": "Optional.",
+          "irradiance_sensor": "W/m² oder ein Luxmeter (lx wird umgerechnet, etwa 120 lx pro W/m²); nötig, wenn die Wetterstation verwendet wird.",
+          "forecast_now_sensor": "Optional. Leer lassen, wenn du keine Solarprognose hast: HESC plant dann nach Preisen und lädt mit gemessener Sonne.",
+          "grid_power_l1_sensor": "Optional, für den Phasenhinweis: die Netzleistung jeder Phase von deinem Zähler (W oder kW, netto). Das Vorzeichen ermittelt HESC selbst.",
+          "grid_power_l2_sensor": "Optional, siehe Phase 1.",
+          "grid_power_l3_sensor": "Optional, siehe Phase 1."
+        }
+      },
+      "ev": {
+        "title": "Elektroauto",
+        "description": "Wie HESC das Auto sieht.\n\n{soc_hint}",
+        "data": {
+          "ev_connected_sensor": "Auto angeschlossen",
+          "ev_disconnected_values": "Werte, die 'kein Auto' bedeuten",
+          "ev_power_sensor": "Ladeleistung",
+          "ev_soc_sensor": "Ladestand Auto",
+          "ev_green_energy_sensor": "Grüne Energie Auto"
+        },
+        "data_description": {
+          "ev_disconnected_values": "Durch Kommas getrennt, Groß-/Kleinschreibung egal.",
+          "ev_power_sensor": "W oder kW; kW wird umgerechnet.",
+          "ev_soc_sensor": "Empfohlen. Für das Ladeziel, die Mindestladung und 'Auto voll'. Ohne diesen Sensor plant HESC nur in kWh.",
+          "ev_green_energy_sensor": "Optional."
+        }
+      },
+      "charger": {
+        "title": "Entitäten der Wallbox",
+        "description": "Wie HESC den Solarmodus der Wallbox sieht.",
+        "data": {
+          "charger_mode_entity": "Entität für den Lademodus",
+          "charger_eco_values": "Wert(e) für den Solarmodus",
+          "charger_solar_switch_entity": "Solarschalter",
+          "charger_start_stop_entity": "Start/Stopp-Entität",
+          "charger_resume_entity": "Fortsetzen-Entität",
+          "charger_current_entity": "Ladestrom"
+        },
+        "data_description": {
+          "charger_eco_values": "Werte des Lademodus, durch Kommas getrennt, die bedeuten, dass die Wallbox in ihrem Solarmodus ist.",
+          "charger_solar_switch_entity": "Optional; nur für Wallboxen, die zum Solarladen auch einen Schalter brauchen.",
+          "charger_start_stop_entity": "Optional.",
+          "charger_resume_entity": "Optional.",
+          "charger_current_entity": "Optional. Damit regelt HESC die Wallbox herunter, während sie aus dem Netz lädt, sodass mehr von der Ladung aus der Sonne kommt (das Auto ist trotzdem rechtzeitig voll). Wallbox: \"Maximum charging current\" (dafür ist ein Wallbox-Administratorkonto nötig)."
+        }
+      },
+      "hpvc": {
+        "title": "HPVC",
+        "description": "HESC arbeitet mit HPVC zusammen oder allein.",
+        "data": {
+          "standalone": "Ohne HPVC (eigenständig)",
+          "hpvc_enabled_entity": "Entität 'HPVC an'",
+          "hpvc_limited_entity": "Entität 'HPVC begrenzt'"
+        }
+      }
+    },
+    "error": {
+      "irradiance_required": "Wähle einen Einstrahlungssensor oder schalte die Wetterstation aus.",
+      "eco_values_required": "Gib mindestens einen Wert für den Solarmodus ein.",
+      "hpvc_required": "Wähle die Entitäten von HPVC oder schalte eigenständig ein.",
+      "pv_required": "Wähle einen Sensor für die Solarleistung oder übernimm ihn aus HPVC.",
+      "phases_all_or_none": "Wähle alle drei Phasen (drei verschiedene Sensoren) oder lass alle drei leer."
+    },
+    "abort": {
+      "already_configured": "HESC v3 ist bereits eingerichtet.",
+      "single_instance_allowed": "HESC v3 ist bereits eingerichtet."
+    }
+  },
+  "options": {
+    "step": {
+      "sources": {
+        "title": "Quellen",
+        "description": "Solarleistung, Netzleistung und die Solarprognose.",
+        "data": {
+          "use_hpvc_sources": "Solar- und Netzleistung aus HPVC",
+          "pv_power_sensor": "Solarleistung",
+          "grid_power_sensor": "Netzleistung",
+          "grid_export_positive": "Netzsensor: Einspeisung ist positiv",
+          "forecast_now_sensor": "Solarprognose jetzt",
+          "forecast_30m_sensor": "Solarprognose in 30 Minuten",
+          "forecast_attribute": "Attribut der Prognose",
+          "solar_today_sensor": "Solarprognose heute",
+          "solar_tomorrow_sensor": "Solarprognose morgen",
+          "use_irradiance": "Eigene Wetterstation verwenden",
+          "irradiance_sensor": "Einstrahlungssensor",
+          "grid_power_l1_sensor": "Netzleistung Phase 1",
+          "grid_power_l2_sensor": "Netzleistung Phase 2",
+          "grid_power_l3_sensor": "Netzleistung Phase 3"
+        },
+        "data_description": {
+          "use_hpvc_sources": "Die in HPVC gewählten Sensoren für Solar und Netz verwenden, wenn HPVC sie hat (wie in v2). Sonst gilt deine eigene Wahl unten.",
+          "pv_power_sensor": "W oder kW; kW wird umgerechnet. Nicht nötig, wenn HPVC ihn liefert.",
+          "grid_power_sensor": "Optional. W oder kW.",
+          "grid_export_positive": "Einschalten, wenn dein Netzsensor Einspeisung als positiven Wert zeigt.",
+          "forecast_attribute": "Attribut, das statt des Zustands gelesen wird; leer = den Zustand verwenden.",
+          "solar_today_sensor": "Optional. Solcast (Attribut detailedForecast) oder Open-Meteo Solar Forecast (Attribut watts).",
+          "solar_tomorrow_sensor": "Optional.",
+          "irradiance_sensor": "W/m² oder ein Luxmeter (lx wird umgerechnet, etwa 120 lx pro W/m²); nötig, wenn die Wetterstation verwendet wird.",
+          "forecast_now_sensor": "Optional. Leer lassen, wenn du keine Solarprognose hast: HESC plant dann nach Preisen und lädt mit gemessener Sonne.",
+          "grid_power_l1_sensor": "Optional, für den Phasenhinweis: die Netzleistung jeder Phase von deinem Zähler (W oder kW, netto). Das Vorzeichen ermittelt HESC selbst.",
+          "grid_power_l2_sensor": "Optional, siehe Phase 1.",
+          "grid_power_l3_sensor": "Optional, siehe Phase 1."
+        }
+      },
+      "ev": {
+        "title": "Elektroauto",
+        "description": "Wie HESC das Auto sieht.\n\n{soc_hint}",
+        "data": {
+          "ev_connected_sensor": "Auto angeschlossen",
+          "ev_disconnected_values": "Werte, die 'kein Auto' bedeuten",
+          "ev_power_sensor": "Ladeleistung",
+          "ev_soc_sensor": "Ladestand Auto",
+          "ev_green_energy_sensor": "Grüne Energie Auto"
+        },
+        "data_description": {
+          "ev_disconnected_values": "Durch Kommas getrennt, Groß-/Kleinschreibung egal.",
+          "ev_power_sensor": "W oder kW; kW wird umgerechnet.",
+          "ev_soc_sensor": "Empfohlen. Für das Ladeziel, die Mindestladung und 'Auto voll'. Ohne diesen Sensor plant HESC nur in kWh.",
+          "ev_green_energy_sensor": "Optional."
+        }
+      },
+      "charger": {
+        "title": "Entitäten der Wallbox",
+        "description": "Wie HESC den Solarmodus der Wallbox sieht.",
+        "data": {
+          "charger_mode_entity": "Entität für den Lademodus",
+          "charger_eco_values": "Wert(e) für den Solarmodus",
+          "charger_solar_switch_entity": "Solarschalter",
+          "charger_start_stop_entity": "Start/Stopp-Entität",
+          "charger_resume_entity": "Fortsetzen-Entität",
+          "charger_current_entity": "Ladestrom"
+        },
+        "data_description": {
+          "charger_eco_values": "Werte des Lademodus, durch Kommas getrennt, die bedeuten, dass die Wallbox in ihrem Solarmodus ist.",
+          "charger_solar_switch_entity": "Optional; nur für Wallboxen, die zum Solarladen auch einen Schalter brauchen.",
+          "charger_start_stop_entity": "Optional.",
+          "charger_resume_entity": "Optional.",
+          "charger_current_entity": "Optional. Damit regelt HESC die Wallbox herunter, während sie aus dem Netz lädt, sodass mehr von der Ladung aus der Sonne kommt (das Auto ist trotzdem rechtzeitig voll). Wallbox: \"Maximum charging current\" (dafür ist ein Wallbox-Administratorkonto nötig)."
+        }
+      },
+      "hpvc": {
+        "title": "HPVC",
+        "description": "HESC arbeitet mit HPVC zusammen oder allein.",
+        "data": {
+          "standalone": "Ohne HPVC (eigenständig)",
+          "hpvc_enabled_entity": "Entität 'HPVC an'",
+          "hpvc_limited_entity": "Entität 'HPVC begrenzt'"
+        }
+      },
+      "init": {
+        "title": "Wallbox",
+        "description": "Wähle den Wallbox-Typ erneut. Herstellerwerte werden nur ersetzt, wenn du von einer Marke zu einer anderen wechselst; leere Felder der Wallbox werden erneut gesucht (wie in v2).",
+        "data": {
+          "charger_type": "Wallbox-Typ"
+        }
+      }
+    },
+    "error": {
+      "irradiance_required": "Wähle einen Einstrahlungssensor oder schalte die Wetterstation aus.",
+      "eco_values_required": "Gib mindestens einen Wert für den Solarmodus ein.",
+      "hpvc_required": "Wähle die Entitäten von HPVC oder schalte eigenständig ein.",
+      "pv_required": "Wähle einen Sensor für die Solarleistung oder übernimm ihn aus HPVC.",
+      "phases_all_or_none": "Wähle alle drei Phasen (drei verschiedene Sensoren) oder lass alle drei leer."
+    }
+  },
+  "entity": {
+    "button": {
+      "costs_export": {
+        "name": "Ladekosten exportieren"
+      },
+      "settings_backup": {
+        "name": "Einstellungen sichern"
+      },
+      "settings_restore": {
+        "name": "Einstellungen wiederherstellen"
+      },
+      "settings_reset": {
+        "name": "Einstellungen auf Standardwerte"
+      },
+      "notify_test": {
+        "name": "Testbenachrichtigung senden"
+      },
+      "generate_report": {
+        "name": "Bericht erstellen"
+      },
+      "take_over_v2": {
+        "name": "Einstellungen und Verlauf von v2 übernehmen"
+      },
+      "charger_search": {
+        "name": "Entitäten der Wallbox erneut suchen"
+      },
+      "charge_now_plan_goal": {
+        "name": "Jetzt bis zum Ladeziel des Plans laden"
+      },
+      "charge_now_stop": {
+        "name": "Jetzt laden beenden"
+      },
+      "skip_next_day": {
+        "name": "Nächsten Tag des Wochenplans überspringen"
+      },
+      "undo_skip_day": {
+        "name": "Überspringen eines Tages rückgängig machen"
+      },
+      "plan_off": {
+        "name": "Ladeplan aus"
+      }
+    },
+    "sensor": {
+      "pv_power": {
+        "name": "Solarleistung"
+      },
+      "grid_power": {
+        "name": "Netzleistung"
+      },
+      "ev_power": {
+        "name": "Ladeleistung Auto"
+      },
+      "forecast_now": {
+        "name": "Solarprognose jetzt"
+      },
+      "forecast_30m": {
+        "name": "Solarprognose in 30 Minuten"
+      },
+      "irradiance": {
+        "name": "Einstrahlung"
+      },
+      "ev_soc": {
+        "name": "Ladestand Auto"
+      },
+      "charger_mode": {
+        "name": "Lademodus Wallbox"
+      },
+      "missing_inputs": {
+        "name": "Fehlende Eingaben"
+      },
+      "state": {
+        "name": "Zustand"
+      },
+      "reason": {
+        "name": "Grund"
+      },
+      "last_action": {
+        "name": "Letzte Aktion"
+      },
+      "insight_today": {
+        "name": "Heute"
+      },
+      "insight_accuracy": {
+        "name": "Genauigkeit heute"
+      },
+      "insight_now": {
+        "name": "Jetzt"
+      },
+      "plan_status": {
+        "name": "Status Ladeplan"
+      },
+      "kick_status": {
+        "name": "Status Hausspeicher und Auto"
+      },
+      "costs_export_info": {
+        "name": "Export Ladekosten"
+      },
+      "charging_costs": {
+        "name": "Ladekosten"
+      },
+      "prices": {
+        "name": "Preise"
+      },
+      "charge_plan": {
+        "name": "Ladeplan"
+      },
+      "price_forecast": {
+        "name": "Preisprognose"
+      },
+      "expected_charge_cost": {
+        "name": "Erwartete Ladekosten"
+      },
+      "holidays": {
+        "name": "Feiertage"
+      },
+      "ev_battery_level": {
+        "name": "Ladestand Auto mit Ersatzquellen"
+      },
+      "notice": {
+        "name": "Hinweis"
+      },
+      "settings_backup_info": {
+        "name": "Info Sicherung der Einstellungen"
+      },
+      "solar_still_to_come_today": {
+        "name": "Sonne, die heute noch kommt"
+      },
+      "notification_phones": {
+        "name": "Telefone für Benachrichtigungen"
+      },
+      "diag_pv_power": {
+        "name": "Solarleistung (Diagnose)"
+      },
+      "diag_ev_power": {
+        "name": "Ladeleistung (Diagnose)"
+      },
+      "diag_forecast_power": {
+        "name": "Prognoseleistung (Diagnose)"
+      },
+      "diag_forecast_cautious": {
+        "name": "Prognoseleistung, vorsichtig (Diagnose)"
+      },
+      "diag_irradiance": {
+        "name": "Einstrahlung (Diagnose)"
+      },
+      "charger_profile": {
+        "name": "Profil Wallbox"
+      },
+      "setup": {
+        "name": "Einrichtung"
+      },
+      "compare": {
+        "name": "Unterschiede zu v2 heute"
+      },
+      "advice_threshold": {
+        "name": "Empfohlene Startschwelle"
+      },
+      "advice": {
+        "name": "Empfehlung"
+      },
+      "advice_updated": {
+        "name": "Empfehlung aktualisiert"
+      },
+      "report_generated": {
+        "name": "Bericht erstellt"
+      },
+      "forecast_source": {
+        "name": "Quelle Solarprognose",
+        "state": {
+          "solcast": "Solcast",
+          "series": "Prognosereihe (Open-Meteo / Forecast.Solar)",
+          "sensors": "Prognosesensoren",
+          "none": "Keine Prognose"
+        }
+      },
+      "current_status": {
+        "name": "Ladeleistung folgt der Sonne"
+      },
+      "phase_advice": {
+        "name": "Phasenhinweis",
+        "state": {
+          "not_available": "Nicht verfügbar",
+          "measuring": "Wird gemessen",
+          "provisional": "Vorläufig",
+          "confirmed": "Bestätigt"
+        }
+      },
+      "summary": {
+        "name": "Zusammenfassung für Telefon und Uhr"
+      }
+    },
+    "binary_sensor": {
+      "inputs_valid": {
+        "name": "Eingaben gültig"
+      },
+      "ev_connected": {
+        "name": "Auto angeschlossen"
+      },
+      "charger_solar_mode": {
+        "name": "Wallbox im Solarmodus"
+      },
+      "hpvc_limiting": {
+        "name": "HPVC begrenzt"
+      },
+      "diag_ev_connected": {
+        "name": "Auto angeschlossen (Diagnose)"
+      },
+      "diag_charger_solar_mode": {
+        "name": "Wallbox im Solarmodus (Diagnose)"
+      },
+      "diag_release_active": {
+        "name": "Freigabe aktiv (Diagnose)"
+      },
+      "configuration_valid": {
+        "name": "Konfiguration gültig"
+      },
+      "prices_available": {
+        "name": "Preise verfügbar"
+      },
+      "check_charger": {
+        "name": "Prüfung: Wallbox"
+      },
+      "check_sources": {
+        "name": "Prüfung: Quellen"
+      },
+      "check_weather_station": {
+        "name": "Prüfung: Wetterstation"
+      },
+      "check_charge_plan": {
+        "name": "Prüfung: Ladeplan"
+      },
+      "check_home_battery_and_ev": {
+        "name": "Prüfung: Hausspeicher und Auto"
+      },
+      "setup_standalone": {
+        "name": "Einrichtung: eigenständig (kein HPVC)"
+      },
+      "setup_use_hpvc_sources": {
+        "name": "Einrichtung: Solar und Netz aus HPVC"
+      },
+      "setup_use_irradiance": {
+        "name": "Einrichtung: Wetterstation"
+      },
+      "report_ready": {
+        "name": "Bericht fertig"
+      },
+      "kick_hand_back": {
+        "name": "Kickstart: Übergabe läuft"
+      }
+    },
+    "switch": {
+      "shadow_mode": {
+        "name": "Schattenmodus"
+      },
+      "use_weather_station": {
+        "name": "Eigene Wetterstation verwenden"
+      },
+      "use_hpvc": {
+        "name": "HPVC verwenden"
+      },
+      "pv_and_grid_from_hpvc": {
+        "name": "Solar und Netz aus HPVC"
+      },
+      "enabled": {
+        "name": "HESC an"
+      },
+      "plan_enabled": {
+        "name": "Ladeplan"
+      },
+      "rep_enabled": {
+        "name": "Wochenplan"
+      },
+      "rep_mon": {
+        "name": "Wochenplan Montag"
+      },
+      "rep_tue": {
+        "name": "Wochenplan Dienstag"
+      },
+      "rep_wed": {
+        "name": "Wochenplan Mittwoch"
+      },
+      "rep_thu": {
+        "name": "Wochenplan Donnerstag"
+      },
+      "rep_fri": {
+        "name": "Wochenplan Freitag"
+      },
+      "rep_sat": {
+        "name": "Wochenplan Samstag"
+      },
+      "rep_sun": {
+        "name": "Wochenplan Sonntag"
+      },
+      "vacation": {
+        "name": "Urlaubsmodus"
+      },
+      "plan_opportunity": {
+        "name": "Ladeplan: günstige Gelegenheiten nutzen"
+      },
+      "min_charge_enabled": {
+        "name": "Mindestladung"
+      },
+      "kick_enabled": {
+        "name": "Hausspeicher und Auto (Kickstart)"
+      },
+      "costs_all_in": {
+        "name": "Kosten: Preis ist Endpreis"
+      },
+      "morning_summary": {
+        "name": "Morgenübersicht"
+      },
+      "show_advice": {
+        "name": "Empfehlung zeigen"
+      },
+      "show_charger_fields": {
+        "name": "Felder Wallbox zeigen"
+      },
+      "show_costs_settings": {
+        "name": "Einstellungen Kosten zeigen"
+      },
+      "show_kick_settings": {
+        "name": "Einstellungen Kickstart zeigen"
+      },
+      "show_min_charge_settings": {
+        "name": "Einstellungen Mindestladung zeigen"
+      },
+      "show_optional": {
+        "name": "Weitere Einstellungen zeigen"
+      },
+      "show_plan_settings": {
+        "name": "Einstellungen Ladeplan und Meldungen zeigen"
+      },
+      "show_thresholds": {
+        "name": "Ladeschwellen zeigen"
+      },
+      "show_timing": {
+        "name": "Zeiten zeigen"
+      },
+      "show_weather_settings": {
+        "name": "Einstellungen Wetterstation zeigen"
+      },
+      "edit_sources": {
+        "name": "Automatische Quellen ändern"
+      },
+      "costs_enabled": {
+        "name": "Seite Ladekosten"
+      },
+      "advice_auto": {
+        "name": "Empfehlung automatisch anwenden"
+      },
+      "seasonal_threshold": {
+        "name": "Startschwelle nach Jahreszeit"
+      }
+    },
+    "number": {
+      "p_start": {
+        "name": "Prognoseleistung zum Starten"
+      },
+      "p_hold": {
+        "name": "Prognoseleistung zum Weiterladen"
+      },
+      "irr_start": {
+        "name": "Einstrahlung zum Starten"
+      },
+      "irr_hold": {
+        "name": "Einstrahlung zum Weiterladen"
+      },
+      "t_stable": {
+        "name": "Bedingungen stabil vor Freigabe"
+      },
+      "t_start": {
+        "name": "Warten, bis die Wallbox startet"
+      },
+      "t_dip": {
+        "name": "Erlaubter Sonneneinbruch"
+      },
+      "t_stop": {
+        "name": "Wallbox gestoppt vor Wiederherstellung"
+      },
+      "t_max": {
+        "name": "Längste Freigabe"
+      },
+      "cooldown": {
+        "name": "Pause nach Freigabe"
+      },
+      "max_attempts": {
+        "name": "Fehlgeschlagene Freigaben pro Tag (max.)"
+      },
+      "ev_active_w": {
+        "name": "Schwelle Auto lädt"
+      },
+      "ev_full_soc": {
+        "name": "Auto voll bei Ladestand"
+      },
+      "plan_opportunity_price": {
+        "name": "Ladeplan: Preis für eine günstige Gelegenheit"
+      },
+      "min_charge_soc": {
+        "name": "Mindestladestand"
+      },
+      "min_charge_hours": {
+        "name": "Mindestladung innerhalb"
+      },
+      "plan_final_check_min": {
+        "name": "Ladeplan: letzte Prüfung vor der Fertig-Zeit"
+      },
+      "ev_battery_kwh": {
+        "name": "Nutzbare Akkukapazität Auto"
+      },
+      "plan_charge_kw": {
+        "name": "Ladeplan: Ladeleistung aus dem Netz"
+      },
+      "home_battery_kwh": {
+        "name": "Größe Hausspeicher (alle zusammen)"
+      },
+      "kick_max_per_day": {
+        "name": "Kickstarts pro Tag (max.)"
+      },
+      "kick_min_ev_kwh": {
+        "name": "Kickstart: minimale Restsonne für das Auto"
+      },
+      "costs_markup": {
+        "name": "Kosten: Aufschlag pro kWh (Energiesteuer + Anbieter)"
+      },
+      "costs_vat": {
+        "name": "Kosten: MwSt."
+      },
+      "feed_in_price": {
+        "name": "Einspeisevergütung"
+      },
+      "advice_window_days": {
+        "name": "Empfehlung auf Basis der letzten"
+      },
+      "advice_min_runs": {
+        "name": "Empfehlung: Mindestanzahl Sitzungen"
+      }
+    },
+    "select": {
+      "plan_day": {
+        "name": "Ladeplan: Tag"
+      },
+      "plan_time": {
+        "name": "Ladeplan: Uhrzeit"
+      },
+      "plan_goal": {
+        "name": "Ladeplan: Ladeziel"
+      },
+      "rep_time": {
+        "name": "Wochenplan: Uhrzeit"
+      },
+      "rep_goal": {
+        "name": "Wochenplan: Ladeziel"
+      },
+      "price_source": {
+        "name": "Preisquelle"
+      },
+      "currency": {
+        "name": "Währung"
+      },
+      "price_resolution": {
+        "name": "Preise pro"
+      },
+      "morning_summary_time": {
+        "name": "Uhrzeit Morgenübersicht"
+      },
+      "costs_period": {
+        "name": "Zeitraum Ladekosten"
+      },
+      "notify_pick": {
+        "name": "Benachrichtigungen: Telefon hinzufügen oder entfernen"
+      },
+      "charger_type": {
+        "name": "Wallbox-Typ"
+      },
+      "charge_now": {
+        "name": "Jetzt laden bis"
+      }
+    },
+    "datetime": {
+      "plan_deadline": {
+        "name": "Ladeplan fertig um"
+      }
+    },
+    "date": {
+      "vacation_until": {
+        "name": "Urlaub bis"
+      },
+      "rep_skip": {
+        "name": "Wochenplan überspringen am"
+      }
+    },
+    "text": {
+      "price_sensor": {
+        "name": "Sensor Day-Ahead-Preise"
+      },
+      "charger_grid_mode_value": {
+        "name": "Wert Lademodus 'jetzt laden'"
+      },
+      "notify_services": {
+        "name": "Benachrichtigungsdienste"
+      },
+      "home_battery_soc_sensors": {
+        "name": "Sensoren Ladestand Hausspeicher"
+      },
+      "home_battery_power_sensors": {
+        "name": "Sensoren Leistung Hausspeicher"
+      }
+    }
+  },
+  "issues": {
+    "no_solar_forecast": {
+      "title": "HESC arbeitet ohne Solarprognose",
+      "description": "HESC plant das Netzladen jetzt nur nach Preisen und lädt mit der Sonne, die es misst (Solarleistung oder dein Einstrahlungs- bzw. Luxsensor). Der Ladeplan rechnet nicht mit Sonne, damit er nie zu spät lädt, und der Kickstart ist aus.\n\nMit einer Solarprognose plant HESC klüger. Installiere eine davon und wähle ihre Sensoren in der Einrichtung von HESC (Einstellungen → Geräte & Dienste → HESC → Konfigurieren → Quellen):\n- **Solcast PV Forecast** (HACS, empfohlen): Prognose jetzt, in 30 Minuten und heute.\n- **Open-Meteo Solar Forecast** (HACS): schalte den Sensor \"power production next 30 minutes\" ein.\n- **Forecast.Solar** (eingebaut): HESC liest die Prognosereihe selbst.\n\nDieser Hinweis verschwindet, sobald eine Prognose gewählt ist."
+    },
+    "dashboard_url_taken": {
+      "title": "HESC-Dashboard nicht hinzugefügt: {url} ist schon belegt",
+      "description": "HESC bringt ein eigenes Dashboard mit (Seitenleiste: **HESC**, Adresse {url}). Ein anderes Dashboard verwendet diese Adresse schon, wahrscheinlich eines, das du selbst durch Einfügen der YAML von HESC erstellt hast. HESC lässt dieses Dashboard in Ruhe.\n\nUm das Dashboard zu verwenden, das zu HESC gehört (es wird mit HESC aktualisiert): lösche dein eigenes Dashboard unter Einstellungen → Dashboards und lade danach HESC neu (Einstellungen → Geräte & Dienste → HESC v3 → ⋮ → Neu laden) oder starte Home Assistant neu. Kommt die Adresse aus configuration.yaml oder einer anderen Integration, gib sie dort frei.\n\nUm dein eigenes Dashboard zu behalten: ignoriere diesen Hinweis."
+    }
+  },
+  "services": {
+    "set_charge_plan": {
+      "name": "Ladeplan festlegen",
+      "description": "Legt den einmaligen Ladeplan fest (fertig um, Ladeziel) und schaltet ihn ein. Für einen Siri-Kurzbefehl, eine Taste in einer Benachrichtigung oder die Apple Watch.",
+      "fields": {
+        "day": {
+          "name": "Tag",
+          "description": "Fertig an diesem Tag: Today, Tomorrow oder Mon … Sun. Weggelassen: der schon eingestellte Tag."
+        },
+        "time": {
+          "name": "Uhrzeit",
+          "description": "Fertig um diese Uhrzeit, eine volle oder halbe Stunde (zum Beispiel 07:00). Weggelassen: die schon eingestellte Uhrzeit."
+        },
+        "goal": {
+          "name": "Ladeziel",
+          "description": "Zu erreichender Ladestand: 50 bis 100 %, in Schritten von 5. Weggelassen: das schon eingestellte Ladeziel."
+        }
+      }
+    },
+    "charge_plan_off": {
+      "name": "Ladeplan aus",
+      "description": "Schaltet den einmaligen Ladeplan aus."
+    },
+    "skip_plan_day": {
+      "name": "Einen Tag des Wochenplans überspringen",
+      "description": "Der Wochenplan tut an einem Tag nichts (ein freier Tag); der Plan selbst bleibt, wie er ist. Ohne Datum: der nächste Tag, für den der Plan laden würde.",
+      "fields": {
+        "date": {
+          "name": "Datum",
+          "description": "Der zu überspringende Tag. Weggelassen: der nächste Tag des Wochenplans."
+        }
+      }
+    },
+    "undo_skip_plan_day": {
+      "name": "Überspringen eines Tages rückgängig machen",
+      "description": "Der Wochenplan lädt wieder an dem Tag, der übersprungen war."
+    },
+    "charge_now": {
+      "name": "Jetzt laden",
+      "description": "Lädt jetzt aus dem Netz, bis das Auto das Ladeziel erreicht; danach geht die Wallbox zurück in ihren eigenen Solarmodus. Hört von selbst auf, wenn das Auto abgesteckt wird.",
+      "fields": {
+        "goal": {
+          "name": "Ladeziel",
+          "description": "Zu erreichender Ladestand: 50 bis 100 %, in Schritten von 5."
+        }
+      }
+    },
+    "charge_now_off": {
+      "name": "Jetzt laden beenden",
+      "description": "Beendet \"jetzt laden\"; die Wallbox geht zurück in ihren eigenen Solarmodus. Ein geplantes Netzladen bleibt, wie es ist."
+    }
+  },
+  "exceptions": {
+    "bad_plan_time": {
+      "message": "Die Uhrzeit {time} geht nicht: verwende eine volle oder halbe Stunde, zum Beispiel 07:00 oder 07:30."
+    },
+    "not_loaded": {
+      "message": "HESC ist nicht eingerichtet oder läuft nicht."
+    },
+    "no_repeating_day": {
+      "message": "Der Wochenplan ist aus oder hat keinen Tag eingestellt: es gibt keinen Tag zum Überspringen."
+    },
+    "skip_in_past": {
+      "message": "{date} ist schon vorbei."
+    },
+    "charge_now_shadow": {
+      "message": "Der Schattenmodus ist an: HESC v3 schaltet nichts und kann deshalb jetzt nicht laden."
+    },
+    "ev_not_connected": {
+      "message": "Das Auto ist nicht angeschlossen."
+    },
+    "no_battery_level": {
+      "message": "HESC kennt den Ladestand des Autos nicht und kann deshalb nicht erkennen, wann das Ladeziel erreicht ist."
+    },
+    "charge_now_close": {
+      "message": "Das Auto steht schon bei {soc}%: weniger als 3% unter {goal}% oder darüber, deshalb beginnt HESC nicht zu laden."
+    },
+    "grid_not_set_up": {
+      "message": "Netzladen ist nicht eingerichtet (ein Start/Stopp-Schalter oder eine Lademodus-Entität mit einem Wert für 'jetzt laden'), deshalb kann HESC jetzt nicht laden."
+    }
+  }
+}

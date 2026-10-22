@@ -1,0 +1,3664 @@
+title: HESC v3
+views:
+- type: sections
+  title: Main
+  path: home-ev-solar-control
+  icon: hesc:ev-zon
+  max_columns: 3
+  badges:
+  - type: entity
+    entity: sensor.hesc_v3_state
+    name: HESC Status
+    show_name: true
+    show_state: true
+    show_icon: true
+    icon: hesc:ev-zon
+    visibility:
+    - condition: state
+      entity: binary_sensor.hesc_v3_configuration_valid
+      state: 'on'
+  - type: entity
+    entity: binary_sensor.hesc_v3_ev_connected_diagnostic
+    name: EV
+    show_name: true
+    show_state: true
+    show_icon: true
+    visibility:
+    - condition: state
+      entity: binary_sensor.hesc_v3_configuration_valid
+      state: 'on'
+  - type: entity
+    entity: binary_sensor.hesc_v3_charger_in_solar_mode_diagnostic
+    name: Solar mode
+    show_name: true
+    show_state: true
+    show_icon: true
+    visibility:
+    - condition: state
+      entity: binary_sensor.hesc_v3_configuration_valid
+      state: 'on'
+  - type: entity
+    entity: sensor.hesc_v3_expected_charge_cost
+    name: Expected charge cost
+    show_name: true
+    show_state: true
+    show_icon: true
+    icon: hesc:euro-klok
+    visibility:
+    - condition: state
+      entity: binary_sensor.hesc_v3_configuration_valid
+      state: 'on'
+    state_content: display
+  - type: entity
+    entity: binary_sensor.hpvc_pv_limited
+    name: HPVC limiting
+    show_name: true
+    show_state: true
+    show_icon: true
+    visibility:
+    - condition: state
+      entity: binary_sensor.hesc_v3_configuration_valid
+      state: 'on'
+    - condition: state
+      entity: switch.hesc_v3_use_hpvc
+      state: 'on'
+  - type: entity
+    entity: binary_sensor.hesc_v3_release_active_diagnostic
+    name: Release
+    show_name: true
+    show_state: true
+    show_icon: true
+    visibility:
+    - condition: state
+      entity: binary_sensor.hesc_v3_release_active_diagnostic
+      state: 'on'
+    - condition: state
+      entity: binary_sensor.hesc_v3_configuration_valid
+      state: 'on'
+  - type: entity
+    entity: switch.hesc_v3_charging_costs_page
+    name: Costs
+    show_name: true
+    show_state: false
+    show_icon: true
+    icon: hesc:euro
+    color: green
+    tap_action:
+      action: navigate
+      navigation_path: /hesc-v3/costs
+    visibility:
+    - condition: state
+      entity: switch.hesc_v3_charging_costs_page
+      state: 'on'
+  - type: entity
+    entity: sensor.hesc_v3_charge_plan
+    name: Guide
+    show_name: true
+    show_state: false
+    show_icon: true
+    icon: hesc:boek
+    color: blue
+    tap_action:
+      action: navigate
+      navigation_path: /hesc-v3/guide
+    hold_action:
+      action: navigate
+      navigation_path: /hesc-v3/guide-nl
+  sections:
+  - type: grid
+    visibility:
+    - condition: state
+      entity: binary_sensor.hesc_v3_configuration_valid
+      state_not: 'on'
+    cards:
+    - type: markdown
+      grid_options:
+        columns: 12
+      content: '{%- set sa = is_state(''switch.hesc_v3_use_hpvc'', ''off'') -%}
+
+        <ha-alert title="Welcome to Home EV Solar Control" alert-type="info">First fill in the essentials on the <b>Settings</b> tab: only three things about your charger. {{ ''Also pick your PV and grid power sensors there; everything else has a good default.'' if sa else ''Everything else is taken over from Home PV Control or has a good default.'' }} The dashboard appears as soon as HESC has what it needs.</ha-alert>
+
+
+        {%- macro exists(e) -%}{{ e not in ['''', ''unknown'', ''unavailable''] and (states(e) != ''unknown'' or state_attr(e, ''friendly_name'') is not none) }}{%- endmacro -%}
+
+        {%- macro now(e) -%}{%- set u = state_attr(e, ''unit_of_measurement'') -%}{{ states(e) }}{{ '' '' ~ u if u else '''' }}{%- endmacro -%}
+
+        {%- set conn = state_attr(''sensor.hesc_v3_setup'', ''hesc_ev_connected_sensor'') | trim -%}
+
+        {%- set pow = state_attr(''sensor.hesc_v3_setup'', ''hesc_ev_power_sensor'') | trim -%}
+
+        {%- set mode = state_attr(''sensor.hesc_v3_setup'', ''hesc_charger_mode_entity'') | trim -%}
+
+        {%- set solar = state_attr(''sensor.hesc_v3_setup'', ''hesc_charger_eco_value'') | trim -%}
+
+        {%- set solar_ok = solar not in ['''', ''unknown'', ''unavailable''] -%}
+
+        {%- set in_solar = states(mode) in (solar.split('','') | map(''trim'') | list) -%}
+
+        {%- set pv = state_attr(''sensor.hesc_v3_setup'', ''hesc_pv_power_sensor'') | trim -%}
+
+        {%- set grid = state_attr(''sensor.hesc_v3_setup'', ''hesc_grid_power_sensor'') | trim -%}
+
+        {%- set fc = state_attr(''sensor.hesc_v3_setup'', ''hesc_forecast_now_sensor'') | trim -%}
+
+        {%- set fa = state_attr(''sensor.hesc_v3_setup'', ''hesc_forecast_attribute'') | trim -%}
+
+        {%- set hen = state_attr(''sensor.hesc_v3_setup'', ''hesc_hpvc_enabled_entity'') | trim -%}
+
+        {%- set hlim = state_attr(''sensor.hesc_v3_setup'', ''hesc_hpvc_limited_entity'') | trim -%}
+
+        {%- set from_hpvc = is_state(''binary_sensor.hesc_v3_setup_pv_and_grid_from_hpvc'', ''on'') -%}
+
+        {%- set req = [exists(conn) == ''True'', exists(pow) == ''True'', exists(mode) == ''True'' and solar_ok] -%}
+
+        {%- set done = req | select | list | count -%}
+
+        {%- set ok = ''<ha-icon icon="hesc:vinkje-cirkel" style="--mdc-icon-size:16px;vertical-align:-3px;margin-right:4px"></ha-icon>'' -%}{%- set no = ''<ha-icon icon="hesc:kruis-cirkel" style="--mdc-icon-size:16px;vertical-align:-3px;margin-right:4px"></ha-icon>'' -%}
+
+        {%- set pr = state_attr(''sensor.hesc_v3_charger_profile'', ''profile'') or {} -%}
+
+        {%- macro sug(key, good) -%}{%- if not good and (pr.get(key) or []) | count > 0 -%}<br>&nbsp;&nbsp;<ha-icon icon="hesc:lampje" style="--mdc-icon-size:16px;vertical-align:-3px;margin-right:4px"></ha-icon> Suggested: {{ pr.get(key) | map(''string'') | map(''regex_replace'', ''^(.*)$'', ''<code>\\1</code>'') | join('' or '') }}{%- endif -%}{%- endmacro -%}
+
+        **Your charger ({{ done }} of 3 done)**
+
+        <ha-icon icon="hesc:laadstekker" style="--mdc-icon-size:16px;vertical-align:-3px;margin-right:4px"></ha-icon> **Charger type**: {{ (pr.type ~ ('' · tested'' if pr.tested else '' · not tested yet, check it in shadow mode'') ~ ('' · '' ~ pr.note if pr.note else '''')) if pr.get(''known'') else (''Other: fill in the fields yourself'' if pr.get(''type'') == ''Other (manual)'' else ''pick your charger above, HESC then fills in what it can'') }}
+
+        {{ ok if req[0] else no }} **EV connected**: {{ ''<code>'' ~ conn ~ ''</code> · now '' ~ states(conn) if req[0] else ''pick the sensor that shows the car is plugged in'' }}{{ sug(''connected'', req[0]) }}
+
+        {{ ok if req[1] else no }} **Charging power**: {{ ''<code>'' ~ pow ~ ''</code> · now '' ~ now(pow) if req[1] else ''pick the sensor with the charging power (W or kW)'' }}{{ sug(''power'', req[1]) }}
+
+        {{ ok if req[2] else no }} **Solar mode**: {{ ''<code>'' ~ mode ~ ''</code> = <code>'' ~ solar ~ ''</code> · now '' ~ states(mode) ~ ('' (solar mode)'' if in_solar else '''') if req[2] else ''pick the charger mode entity and the value that means solar charging'' }}{{ sug(''mode'', req[2]) }}
+
+
+        **{{ ''Sources'' if sa else ''Taken over automatically'' }}**
+
+        {{ ok if exists(pv) == ''True'' else no }} **PV power**: <code>{{ pv or ''–'' }}</code>{{ '' (from HPVC)'' if from_hpvc else '''' }} · now {{ now(pv) }}
+
+        {{ ok if exists(grid) == ''True'' else ''<ha-icon icon="mdi:circle-outline" style="--mdc-icon-size:16px;vertical-align:-3px;margin-right:4px"></ha-icon>'' }} **Grid power**: <code>{{ grid or ''–'' }}</code>{{ '' (from HPVC)'' if from_hpvc else '''' }}{{ '' · now '' ~ now(grid) if exists(grid) == ''True'' else '' · optional'' }}
+
+        {{ ok if exists(fc) == ''True'' else no }} **Solar forecast**: <code>{{ fc or ''–'' }}</code>{{ '' ('' ~ fa ~ '')'' if fa else '''' }} · now {{ state_attr(fc, fa) if fa else states(fc) }} W
+
+        {%- if not sa %}{{ ok if exists(hen) == ''True'' and exists(hlim) == ''True'' else no }} **HPVC**: {{ ''found'' if exists(hen) == ''True'' and exists(hlim) == ''True'' else ''not found — is Home PV Control installed?'' }}{% endif %}
+
+
+        [<ha-icon icon="hesc:schuifregelaars" style="--mdc-icon-size:16px;vertical-align:-3px;margin-right:4px"></ha-icon> Open Settings](/hesc-v3/settings)'
+  - type: grid
+    cards:
+    - type: custom:hesc-style
+      style:
+        ha-markdown$: 'h2 ha-icon { --mdc-icon-size: 24px; margin-right: 4px; }
+
+          h2 a ha-icon { --mdc-icon-size: 20px; margin-right: 0; vertical-align: 1px; }
+
+          h2 ha-icon[icon="hesc:laadpaal"] { vertical-align: 4px; }'
+      grid_options:
+        columns: 12
+        rows: auto
+      card:
+        type: markdown
+        content: '## <ha-icon icon="hesc:laadpaal"></ha-icon> EV Solar Master Control <small>· HESC v3</small> <a href="/hesc-v3/guide" title="Guide: how smart charging works"><ha-icon icon="mdi:information-outline" style="--mdc-icon-size:20px;color:#8ab4f8;vertical-align:-2px"></ha-icon></a>
+
+          <small>Starts solar charging on forecast sun by asking HPVC for a temporary PV release (HPVC 1.5.1 or newer). Shadow mode: only evaluates, never asks.</small>'
+    - type: tile
+      entity: switch.hesc_v3_hesc_enabled
+      name: Enable HESC
+      icon: hesc:zon
+      hide_state: true
+      vertical: false
+      features_position: inline
+      features:
+      - type: toggle
+    - type: tile
+      entity: switch.hesc_v3_shadow_mode
+      name: Shadow mode (evaluate only)
+      icon: mdi:ghost-outline
+      hide_state: true
+      vertical: false
+      features_position: inline
+      features:
+      - type: toggle
+    - type: conditional
+      conditions:
+      - entity: binary_sensor.hpvc_external_release_active
+        state: 'on'
+      card:
+        type: tile
+        entity: binary_sensor.hpvc_external_release_active
+        name: HPVC released PV
+        icon: mdi:solar-power-variant
+        color: green
+    visibility:
+    - condition: state
+      entity: binary_sensor.hesc_v3_configuration_valid
+      state: 'on'
+  - type: grid
+    cards:
+    - type: custom:hesc-style
+      style:
+        ha-markdown$: 'table { width: 100%; }
+
+          thead { display: none; }
+
+          h2 ha-icon { --mdc-icon-size: 24px; margin-right: 4px; }
+
+          h2 a ha-icon { --mdc-icon-size: 20px; margin-right: 0; vertical-align: 1px; }
+
+          h2 ha-icon[icon="hesc:staafdiagram"] { vertical-align: 2.4px; }'
+        .: 'ha-card { min-height: 187px; }'
+      grid_options:
+        columns: full
+        rows: auto
+      card:
+        type: markdown
+        content: '## <ha-icon icon="hesc:staafdiagram"></ha-icon> Status
+
+
+          {% set st = states(''sensor.hesc_v3_state'') %}
+
+          {% set rs = states(''sensor.hesc_v3_reason'') %}
+
+          {% set la = states(''sensor.hesc_v3_last_action'') %}
+
+          {% set lae = states.sensor.hesc_v3_last_action %}
+
+          {% set la_h = ((now() - lae.last_changed).total_seconds() / 3600) if lae else 999 %}
+
+          {% set la_d = (lae.last_changed | as_local).date() if lae else none %}
+
+          {% set la_day = '''' if (la_d is none or la_d == now().date()) else (''yesterday '' if la_d == (now() - timedelta(days=1)).date() else (lae.last_changed | as_local).strftime(''%a '')) %}
+
+          {% set i1 = states(''sensor.hesc_v3_today'') %}
+
+          {% set i2 = states(''sensor.hesc_v3_accuracy_today'') %}
+
+          {% set adv = states(''sensor.hesc_v3_advice'') %}
+
+          {% set r = i1 | regex_findall(''(\\d+) releases \\((\\d+) ok, (\\d+) failed\\)'') %}
+
+          {% set ses = i1 | regex_findall(''(\\d+) solar sessions'') %}
+
+          {% set col = adv | regex_findall(''(\\d+) of (\\d+)'') %}
+
+          | | |
+
+          |:--|:--|
+
+          | **State** | {{ st.replace(''[shadow] '', '''') }}{{ '' · '' ~ rs if rs not in ['''', ''unknown'', ''unavailable''] }}{{ '' · shadow'' if st.startswith(''[shadow]'') }} |
+
+          {%- if la not in ['''', ''unknown'', ''unavailable''] and la_h <= 36 %}
+
+          | **Last action** | {{ la_day }}{{ la }} |
+
+          {%- endif %}
+
+          | **Today** | {{ ses[0] if ses else 0 }} solar sessions · {{ r[0][0] if r else 0 }} HPVC releases{{ '' ('' ~ r[0][2] ~ '' failed)'' if r and r[0][2] | int > 0 }} |
+
+          | **Advice** | {% set ad = states.sensor.hesc_v3_advised_start_threshold -%}{%- set aa = ad.attributes if ad else {} -%}{%- set f = ''{:,}'' -%}{%- if ad and ad.state | is_number and aa.advised_start is number -%}[{{ f.format(aa.advised_start | int) }} / {{ f.format(aa.advised_hold | int) }} W](/hesc-v3/settings) · now {{ f.format(aa.current_start | int) }} / {{ f.format(aa.current_hold | int) }} W{%- if aa.get(''auto'') -%}{%- set tx = aa.get(''status_text'') or '''' -%}{{ '' · auto'' }}{{ ('', next step from '' ~ (tx.split('' from '') | last).rstrip(''.'')) if '' from '' in tx }}{%- endif -%}{%- elif ad and aa.get(''status_text'') -%}{{ (''Collecting: '' ~ aa.get(''good_sessions'') ~ '' of '' ~ aa.get(''need_sessions'') ~ '' sessions while HPVC limited · '' ~ aa.get(''days'') ~ '' of '' ~ aa.get(''need_days'') ~ '' days'') if ad.state == ''collecting'' and aa.get(''status_text'', '''').startswith(''Collecting'') else aa.get(''status_text'') }}{%- else -%}{% if col %}not yet · {{ col[0][1] | int - col[0][0] | int }} more solar sessions needed{% elif adv in ['''', ''unknown'', ''unavailable''] %}–{% else %}available · see report{% endif %}{%- endif %} |'
+    - type: conditional
+      conditions:
+      - entity: binary_sensor.hesc_v3_report_ready
+        state: 'off'
+      card:
+        type: tile
+        entity: button.hesc_v3_generate_report
+        name: Generate report
+        icon: mdi:file-document-plus-outline
+        color: blue
+        hide_state: true
+        tap_action:
+          action: perform-action
+          perform_action: button.press
+          target:
+            entity_id: button.hesc_v3_generate_report
+        icon_tap_action:
+          action: perform-action
+          perform_action: button.press
+          target:
+            entity_id: button.hesc_v3_generate_report
+      grid_options:
+        columns: 12
+    - type: conditional
+      conditions:
+      - entity: binary_sensor.hesc_v3_report_ready
+        state: 'on'
+      card:
+        type: tile
+        entity: binary_sensor.hesc_v3_report_ready
+        name: View report
+        icon: mdi:file-document-check-outline
+        color: green
+        state_content: []
+        hide_state: true
+        tap_action:
+          action: url
+          url_path: /local/hesc_v3/open.html
+        icon_tap_action:
+          action: url
+          url_path: /local/hesc_v3/open.html
+        grid_options:
+          columns: 6
+      grid_options:
+        columns: 12
+    visibility:
+    - condition: state
+      entity: binary_sensor.hesc_v3_configuration_valid
+      state: 'on'
+  - type: grid
+    cards:
+    - type: custom:hesc-style
+      style:
+        ha-markdown$: 'table { width: 100%; }
+
+          thead { display: none; }
+
+          h2 ha-icon { --mdc-icon-size: 24px; margin-right: 4px; }
+
+          h2 a ha-icon { --mdc-icon-size: 20px; margin-right: 0; vertical-align: 1px; }
+
+          h2 ha-icon[icon="hesc:laadstekker"] { vertical-align: 4px; }
+
+          td { padding-top: 2px !important; padding-bottom: 2px !important; }'
+        .: 'ha-card { min-height: 250px; }'
+      grid_options:
+        columns: full
+        rows: auto
+      card:
+        type: markdown
+        content: '## <ha-icon icon="hesc:laadstekker"></ha-icon> Live
+
+          {%- set su = states.sensor.hesc_v3_setup.attributes if states.sensor.hesc_v3_setup else {} -%}
+
+          {%- set sign = 1 if su.get(''hesc_grid_export_positive'') == ''on'' else -1 -%}
+
+          {%- macro flow(v, sign) -%}{%- if v | is_number -%}{%- set x = v | float * sign -%}{{ x | abs | round(0) | int }} W {{ ''export'' if x > 0 else ''import'' }}{%- else -%}–{%- endif -%}{%- endmacro -%}
+
+          {%- set pw = namespace(sum=0, n=0) -%}
+
+          {%- for e in states(''text.hesc_v3_home_battery_power_sensors'').split('','') | map(''trim'') | reject(''eq'', '''') -%}
+
+          {%- if states(e) | is_number -%}{%- set pw.sum = pw.sum + states(e) | float -%}{%- set pw.n = pw.n + 1 -%}{%- endif -%}
+
+          {%- endfor -%}
+
+          {%- set sc = namespace(sum=0, n=0) -%}
+
+          {%- for e in states(''text.hesc_v3_home_battery_level_sensors'').split('','') | map(''trim'') | reject(''eq'', '''') -%}
+
+          {%- if states(e) | is_number -%}{%- set sc.sum = sc.sum + states(e) | float -%}{%- set sc.n = sc.n + 1 -%}{%- endif -%}
+
+          {%- endfor -%}
+
+          {%- set soc = states(''sensor.hesc_v3_ev_battery_level_with_fallbacks'') -%}
+
+          {%- set src = state_attr(''sensor.hesc_v3_ev_battery_level_with_fallbacks'', ''source_name'') -%}
+
+          {%- set est = state_attr(''sensor.hesc_v3_ev_battery_level_with_fallbacks'', ''estimated'') -%}
+
+          {%- set full = states(''number.hesc_v3_ev_full_at_battery_level'') -%}
+
+          {%- set sun = states(''sensor.hesc_v3_solar_still_to_come_today'') -%}
+
+          {%- set raw = states(''sensor.hesc_v3_prices'') -%}
+
+          {%- set pa = states.sensor.hesc_v3_prices.attributes if states.sensor.hesc_v3_prices else {} -%}
+
+          {%- set allin = is_state(''switch.hesc_v3_costs_price_is_all_in'', ''on'') -%}
+
+          {%- set mk = states(''number.hesc_v3_costs_mark_up_per_kwh_energy_tax_supplier'') | float(0) -%}
+
+          {%- set vat = states(''number.hesc_v3_costs_vat'') | float(0) -%}
+
+          {%- macro money(v, pa) -%}{%- set t = ''%.2f'' | format(v) -%}{%- set t = t.replace(''.'', '','') if pa.get(''decimal'', '','') != ''.'' else t -%}{{ (t ~ '' '' ~ pa.get(''symbol'', ''€'')) if pa.get(''symbol_after'') in [true, ''true'', ''True''] else (pa.get(''symbol'', ''€'') ~ '' '' ~ t) }}{%- endmacro %}
+
+          {%- set fk = {''estimate'': ''pv_estimate'', ''estimate10'': ''pv_estimate10'', ''estimate90'': ''pv_estimate90''}.get(su.get(''hesc_forecast_attribute'', '''') | trim, ''pv_estimate10'') -%}
+
+          {%- set ps = states(''number.hesc_v3_forecast_power_to_start'') | float(2000) -%}
+
+          {%- set fr = (state_attr(su.get(''hesc_solar_today_sensor'', '''') | trim, ''detailedForecast'') or []) + (state_attr(su.get(''hesc_solar_tomorrow_sensor'', '''') | trim, ''detailedForecast'') or []) -%}
+
+          {%- set w = namespace(s=none, e=none, done=false) -%}
+
+          {%- for r in fr -%}
+
+          {%- set a = as_local(as_datetime(r.get(''period_start''))) if r.get(''period_start'') else none -%}
+
+          {%- if a is not none and not w.done and a + timedelta(minutes=30) > now() -%}
+
+          {%- if (r.get(fk) | float(0)) * 1000 >= ps -%}{%- if w.s is none -%}{%- set w.s = a -%}{%- endif -%}{%- set w.e = a + timedelta(minutes=30) -%}
+
+          {%- elif w.s is not none -%}{%- set w.done = true -%}{%- endif -%}
+
+          {%- endif -%}
+
+          {%- endfor -%}
+
+          {%- macro dayname(t) -%}{{ ''today'' if t.date() == now().date() else (''tomorrow'' if t.date() == (now() + timedelta(days=1)).date() else t.strftime(''%a'')) }}{%- endmacro -%}
+
+          {%- set sunpart = (''sun now until '' ~ w.e.strftime(''%H:%M'') if w.s <= now() else ''sun '' ~ dayname(w.s) ~ '' '' ~ w.s.strftime(''%H:%M'') ~ ''–'' ~ w.e.strftime(''%H:%M'')) if w.s is not none else (''no sun to start on yet'' if fr else '''') -%}
+
+          {%- set pl = (pa.get(''raw_today'') or []) + (pa.get(''raw_tomorrow'') or []) -%}
+
+          {%- set pl = pl | selectattr(''end'', ''defined'') | list -%}
+
+          {%- set fut = namespace(l=[]) -%}
+
+          {%- for p in pl -%}{%- if as_datetime(p.end) > now() -%}{%- set fut.l = fut.l + [p] -%}{%- endif -%}{%- endfor -%}
+
+          {%- set blk = 4 if (fut.l | count > 1 and (as_datetime(fut.l[1].start) - as_datetime(fut.l[0].start)).total_seconds() <= 900) else 1 -%}
+
+          {%- set c = namespace(i=-1, v=999999) -%}
+
+          {%- for i in range(0, [fut.l | count - blk + 1, 0] | max) -%}
+
+          {%- set m = (fut.l[i:i + blk] | map(attribute=''value'') | map(''float'', 0) | sum) / blk -%}
+
+          {%- if m < c.v -%}{%- set c.i = i -%}{%- set c.v = m -%}{%- endif -%}
+
+          {%- endfor -%}
+
+          {%- set cs = as_local(as_datetime(fut.l[c.i].start)) if c.i >= 0 else none -%}
+
+          {%- set cv = (c.v if allin else (c.v + mk) * (1 + vat / 100)) if c.i >= 0 else 0 -%}
+
+          {%- set cheappart = (''cheapest grid '' ~ dayname(cs) ~ '' '' ~ cs.strftime(''%H:%M'') ~ '' '' ~ money(cv, pa)) if cs is not none else '''' -%}
+
+          {%- set best = sunpart if w.s is not none else (cheappart or sunpart) %}
+
+
+          | | |
+
+          |:--|--:|
+
+          | **Grid** | {{ flow(states(su.get(''hesc_grid_power_sensor'', '''')), sign) }} |
+
+          {%- if pw.n > 0 %}
+
+          | **Home batteries** | {{ pw.sum | round(0) | int }} W{{ ('' · '' ~ ((sc.sum / sc.n) | round(0) | int) ~ '' %'') if sc.n > 0 else '''' }} |
+
+          {%- endif %}
+
+          | **EV battery level** | {{ (soc | float | round(0) | int) ~ '' %'' if soc | is_number else ''–'' }}{{ '' (estimated)'' if est }}{{ ('' · full at '' ~ (full | float | round(0) | int) ~ '' %'') if full | is_number }}{{ '' · '' ~ src if src }} |
+
+          {%- if raw | is_number %}
+
+          | **Energy price now** | {{ money(raw | float if allin else (raw | float + mk) * (1 + vat / 100), pa) }}{{ '''' if allin else '' all-in · market '' ~ money(raw | float, pa) }} |
+
+          {%- endif %}
+
+          | **Solar still to come today** | {{ (sun | float | round(1)) ~ '' kWh'' if sun | is_number else ''–'' }} |
+
+          {%- if best %}
+
+          | **Best time to plug in** | {{ best[:1] | upper }}{{ best[1:] }} |
+
+          {%- endif %}'
+    visibility:
+    - condition: state
+      entity: binary_sensor.hesc_v3_configuration_valid
+      state: 'on'
+  - type: grid
+    cards:
+    - type: vertical-stack
+      cards:
+      - type: custom:hesc-style
+        style: 'ha-card { border-bottom-left-radius: 0; border-bottom-right-radius: 0; border-bottom: none; }
+
+          .card-header { font-size: 20px !important; font-weight: 700 !important; line-height: normal !important; color: var(--primary-text-color) !important; letter-spacing: normal !important; }
+
+          .card-header ha-icon, .card-header ha-state-icon { --mdc-icon-size: 24px; position: relative; top: -3px; margin-inline-end: -6px; }
+
+          #states { padding-top: 0; padding-bottom: 4px; }
+
+          #states > * { margin: 0 !important; }
+
+          .card-header { padding-bottom: 4px !important; }'
+        card:
+          type: entities
+          title: Current state
+          state_color: true
+          entities:
+          - entity: binary_sensor.hesc_v3_ev_connected_diagnostic
+            name: EV connected
+          - entity: binary_sensor.hesc_v3_charger_in_solar_mode_diagnostic
+            name: Charger in solar mode
+          - type: conditional
+            conditions:
+            - entity: switch.hesc_v3_use_hpvc
+              state: 'on'
+            row:
+              entity: binary_sensor.hpvc_pv_limited
+              name: HPVC limiting PV
+          - type: conditional
+            conditions:
+            - entity: switch.hesc_v3_use_hpvc
+              state: 'on'
+            row:
+              entity: binary_sensor.hesc_v3_release_active_diagnostic
+              name: Release active
+          - type: conditional
+            conditions:
+            - entity: switch.hesc_v3_home_battery_and_ev_kickstart
+              state: 'on'
+            - entity: binary_sensor.hesc_v3_ev_connected_diagnostic
+              state: 'on'
+            row:
+              entity: sensor.hesc_v3_home_battery_and_ev_status
+              name: Home battery and EV
+              icon: mdi:battery-arrow-up-outline
+              type: simple-entity
+          icon: hesc:monitor-grafiek
+      - type: custom:hesc-style
+        style: 'ha-card { border-top-left-radius: 0; border-top-right-radius: 0; border-top: none; margin-top: calc(-1 * var(--vertical-stack-card-gap, 8px)); }'
+        visibility:
+        - condition: state
+          entity: switch.hesc_v3_use_hpvc
+          state: 'on'
+        card:
+          type: history-graph
+          hours_to_show: 12
+          entities:
+          - entity: binary_sensor.hesc_v3_ev_connected_diagnostic
+            name: EV connected
+          - entity: binary_sensor.hesc_v3_charger_in_solar_mode_diagnostic
+            name: Solar mode
+          - entity: binary_sensor.hpvc_pv_limited
+            name: HPVC limiting
+          - entity: binary_sensor.hesc_v3_release_active_diagnostic
+            name: Release
+      - type: custom:hesc-style
+        style: 'ha-card { border-top-left-radius: 0; border-top-right-radius: 0; border-top: none; margin-top: calc(-1 * var(--vertical-stack-card-gap, 8px)); }'
+        visibility:
+        - condition: state
+          entity: switch.hesc_v3_use_hpvc
+          state: 'off'
+        card:
+          type: history-graph
+          hours_to_show: 12
+          entities:
+          - entity: binary_sensor.hesc_v3_ev_connected_diagnostic
+            name: EV connected
+          - entity: binary_sensor.hesc_v3_charger_in_solar_mode_diagnostic
+            name: Solar mode
+      grid_options:
+        columns: full
+    visibility:
+    - condition: state
+      entity: binary_sensor.hesc_v3_configuration_valid
+      state: 'on'
+  - type: grid
+    visibility:
+    - condition: state
+      entity: binary_sensor.hesc_v3_configuration_valid
+      state: 'on'
+    cards:
+    - type: custom:hesc-solar-chart
+      title: Solar forecast vs actual · EV
+      icon: hesc:zon
+      height: 337
+      entities:
+        pv_diag: sensor.hesc_v3_pv_power_diagnostic
+        forecast_diag: sensor.hesc_v3_forecast_power_diagnostic
+        ev_diag: sensor.hesc_v3_charging_power_diagnostic
+        p_start: number.hesc_v3_forecast_power_to_start
+      grid_options:
+        columns: full
+        rows: auto
+  - type: grid
+    cards:
+    - type: custom:hesc-solar-forecast
+      title: Expected solar charging opportunities
+      icon: hesc:zonnepaneel
+      height: 170
+      entities:
+        setup: sensor.hesc_v3_setup
+        solar_today: sensor.solcast_pv_forecast_forecast_today
+        solar_tomorrow: sensor.solcast_pv_forecast_forecast_tomorrow
+        p_start: number.hesc_v3_forecast_power_to_start
+        p_hold: number.hesc_v3_forecast_power_to_hold
+      grid_options:
+        columns: full
+        rows: auto
+    - type: custom:hesc-expected-solar
+      entities:
+        setup: sensor.hesc_v3_setup
+        solar_today: sensor.solcast_pv_forecast_forecast_today
+        solar_tomorrow: sensor.solcast_pv_forecast_forecast_tomorrow
+        p_start: number.hesc_v3_forecast_power_to_start
+        p_hold: number.hesc_v3_forecast_power_to_hold
+      grid_options:
+        columns: full
+        rows: auto
+    visibility:
+    - condition: state
+      entity: binary_sensor.hesc_v3_configuration_valid
+      state: 'on'
+  header:
+    layout: responsive
+    badges_position: bottom
+    badges_wrap: wrap
+    card:
+      type: custom:hesc-style
+      style:
+        ha-markdown$: 'table, tr, td { border: none !important; background: none !important; } table { border-collapse: collapse; } td { padding: 0 16px 0 0; vertical-align: middle; font-size: 14px; line-height: 1.8; color: #94a3b8; } img { display: block; }'
+      card:
+        type: markdown
+        text_only: true
+        content: '<table><tr><td><a href="/hesc-v3/seizoen"><img src="/hesc_v3_frontend/hesc-logo.png?v=1" width="120" height="120" alt="HESC"></a></td><td>v{{ device_attr(device_id(''sensor.hesc_v3_state''), ''sw_version'') }}<br>{%- set n = states(''sensor.hesc_v3_notice'') -%}
+
+          {%- set p = state_attr(''sensor.hesc_v3_notice'', ''prio'') | int(2) -%}
+
+          {%- if n not in [''none'', ''unknown'', ''unavailable'', ''''] -%}
+
+          {%- set c = ''#ef4444'' if p == 1 else (''#fbbf24'' if p == 2 else ''#94a3b8'') -%}
+
+          <a href="{{ state_attr(''sensor.hesc_v3_notice'', ''link'') or ''/hesc-v3/settings'' }}"><font color="{{ c }}">{{ ''<ha-icon icon="hesc:kruis-cirkel" style="--mdc-icon-size:16px;vertical-align:-3px;margin-right:4px"></ha-icon>'' if p == 1 else (''<ha-icon icon="hesc:waarschuwing" style="--mdc-icon-size:16px;vertical-align:-3px;margin-right:4px"></ha-icon>'' if p == 2 else ''<ha-icon icon="hesc:info" style="--mdc-icon-size:16px;vertical-align:-3px;margin-right:4px"></ha-icon>'') }} P{{ p }} · {{ n }}{{ ('' · '' ~ (as_timestamp(state_attr(''sensor.hesc_v3_notice'', ''since'')) | timestamp_custom(''%H:%M''))) if state_attr(''sensor.hesc_v3_notice'', ''since'') else '''' }} ›</font></a>
+
+          {%- else -%}
+
+          <a href="https://github.com/satscan1/hesc-home-ev-solar-control"><font color="#64748b">✓ No notices · HESC on GitHub ›</font></a>
+
+          {%- endif -%}</td></tr></table>'
+- title: Charge plan
+  path: charge-plan
+  icon: hesc:kalender
+  type: sections
+  max_columns: 3
+  sections:
+  - type: grid
+    column_span: 1
+    cards:
+    - type: custom:hesc-style
+      style:
+        ha-markdown$: 'h2 ha-icon { --mdc-icon-size: 24px; margin-right: 4px; }
+
+          h2 a ha-icon { --mdc-icon-size: 20px; margin-right: 0; vertical-align: 1px; }
+
+          h2 ha-icon[icon="hesc:kalender-klok"] { vertical-align: 3.7px; }'
+      grid_options:
+        columns: full
+      card:
+        type: markdown
+        text_only: true
+        content: '## <ha-icon icon="hesc:kalender-klok"></ha-icon> Charging plan · one fixed day per week&nbsp; <a href="/hesc-v3/guide" title="Guide: how smart charging works"><ha-icon icon="mdi:information-outline" style="--mdc-icon-size:20px;color:#8ab4f8;vertical-align:-2px"></ha-icon></a>'
+    - type: tile
+      entity: select.hesc_v3_charge_plan_day
+      name: Day
+      hide_state: true
+      features:
+      - type: select-options
+      features_position: bottom
+      grid_options:
+        columns: 6
+        rows: auto
+    - type: tile
+      entity: select.hesc_v3_charge_plan_time
+      name: Time
+      hide_state: true
+      features:
+      - type: select-options
+      features_position: bottom
+      grid_options:
+        columns: 6
+        rows: auto
+    - type: tile
+      entity: select.hesc_v3_charge_plan_goal
+      name: Charging goal
+      hide_state: true
+      features:
+      - type: select-options
+      features_position: bottom
+      grid_options:
+        columns: 6
+        rows: auto
+    - type: tile
+      entity: switch.hesc_v3_charge_plan
+      name: Active
+      hide_state: true
+      features:
+      - type: toggle
+      features_position: bottom
+      grid_options:
+        columns: 6
+        rows: auto
+    - type: tile
+      entity: select.hesc_v3_charge_now_to
+      name: Charge now to
+      icon: mdi:lightning-bolt
+      features:
+      - type: select-options
+      features_position: inline
+      grid_options:
+        columns: full
+        rows: auto
+  - type: grid
+    column_span: 1
+    cards:
+    - type: custom:hesc-style
+      style: '.title, h2.heading { font-size: 20px !important; font-weight: 700 !important; line-height: normal !important; color: var(--primary-text-color) !important; letter-spacing: normal !important; }
+
+        ha-icon { --mdc-icon-size: 24px; }
+
+        .title { padding-top: 2px; }'
+      grid_options:
+        columns: full
+      card:
+        type: heading
+        heading: Charging plan · weekly schedule
+        heading_style: title
+        icon: hesc:kalender
+    - type: horizontal-stack
+      grid_options:
+        columns: full
+        rows: auto
+      cards:
+      - type: button
+        entity: switch.hesc_v3_repeating_plan_monday
+        name: Mo
+        show_icon: true
+        show_name: true
+        show_state: false
+        state_color: true
+        tap_action:
+          action: toggle
+        icon: mdi:calendar-check
+        icon_height: 22px
+      - type: button
+        entity: switch.hesc_v3_repeating_plan_tuesday
+        name: Tu
+        show_icon: true
+        show_name: true
+        show_state: false
+        state_color: true
+        tap_action:
+          action: toggle
+        icon: mdi:calendar-check
+        icon_height: 22px
+      - type: button
+        entity: switch.hesc_v3_repeating_plan_wednesday
+        name: We
+        show_icon: true
+        show_name: true
+        show_state: false
+        state_color: true
+        tap_action:
+          action: toggle
+        icon: mdi:calendar-check
+        icon_height: 22px
+      - type: button
+        entity: switch.hesc_v3_repeating_plan_thursday
+        name: Th
+        show_icon: true
+        show_name: true
+        show_state: false
+        state_color: true
+        tap_action:
+          action: toggle
+        icon: mdi:calendar-check
+        icon_height: 22px
+      - type: button
+        entity: switch.hesc_v3_repeating_plan_friday
+        name: Fr
+        show_icon: true
+        show_name: true
+        show_state: false
+        state_color: true
+        tap_action:
+          action: toggle
+        icon: mdi:calendar-check
+        icon_height: 22px
+      - type: button
+        entity: switch.hesc_v3_repeating_plan_saturday
+        name: Sa
+        show_icon: true
+        show_name: true
+        show_state: false
+        state_color: true
+        tap_action:
+          action: toggle
+        icon: mdi:calendar-check
+        icon_height: 22px
+      - type: button
+        entity: switch.hesc_v3_repeating_plan_sunday
+        name: Su
+        show_icon: true
+        show_name: true
+        show_state: false
+        state_color: true
+        tap_action:
+          action: toggle
+        icon: mdi:calendar-check
+        icon_height: 22px
+    - type: tile
+      entity: select.hesc_v3_repeating_plan_time
+      name: Time
+      hide_state: true
+      features:
+      - type: select-options
+      features_position: bottom
+      grid_options:
+        columns: 6
+        rows: auto
+    - type: tile
+      entity: select.hesc_v3_repeating_plan_goal
+      name: Charging goal
+      hide_state: true
+      features:
+      - type: select-options
+      features_position: bottom
+      grid_options:
+        columns: 6
+        rows: auto
+    - type: tile
+      entity: switch.hesc_v3_repeating_plan
+      name: Active
+      hide_state: true
+      features:
+      - type: toggle
+      features_position: inline
+      grid_options:
+        columns: full
+        rows: auto
+    - type: tile
+      entity: switch.hesc_v3_holiday_mode
+      name: Holiday mode
+      icon: mdi:palm-tree
+      hide_state: true
+      features:
+      - type: toggle
+      features_position: inline
+      grid_options:
+        columns: full
+        rows: auto
+    - type: conditional
+      conditions:
+      - condition: state
+        entity: switch.hesc_v3_holiday_mode
+        state: 'on'
+      card:
+        type: tile
+        entity: date.hesc_v3_holiday_until
+        name: Holiday until (optional)
+        icon: mdi:calendar-end
+        vertical: false
+      grid_options:
+        columns: full
+        rows: auto
+    - type: conditional
+      conditions:
+      - condition: state
+        entity: switch.hesc_v3_repeating_plan
+        state: 'on'
+      card:
+        type: tile
+        entity: date.hesc_v3_skip_repeating_plan_on
+        name: Skip one day (day off)
+        icon: mdi:calendar-remove
+        vertical: false
+      grid_options:
+        columns: full
+        rows: auto
+  - type: grid
+    column_span: 1
+    cards:
+    - type: custom:hesc-style
+      style:
+        ha-markdown$: 'h2 ha-icon { --mdc-icon-size: 24px; margin-right: 4px; }
+
+          h2 a ha-icon { --mdc-icon-size: 20px; margin-right: 0; vertical-align: 1px; }
+
+          h2 ha-icon[icon="hesc:schuifregelaars"] { vertical-align: 3.4px; }'
+      grid_options:
+        columns: full
+      card:
+        type: markdown
+        text_only: true
+        content: '## <ha-icon icon="hesc:schuifregelaars"></ha-icon> Charging settings&nbsp; <a href="/hesc-v3/guide" title="Guide: how smart charging works"><ha-icon icon="mdi:information-outline" style="--mdc-icon-size:20px;color:#8ab4f8;vertical-align:-2px"></ha-icon></a>'
+    - type: tile
+      entity: switch.hesc_v3_charge_plan_take_cheap_chances
+      name: Take cheap chances
+      features:
+      - type: toggle
+      features_position: bottom
+      grid_options:
+        columns: 6
+        rows: auto
+    - type: tile
+      entity: number.hesc_v3_charge_plan_opportunity_price
+      name: Cheap when below
+      features:
+      - type: numeric-input
+        style: buttons
+      features_position: bottom
+      grid_options:
+        columns: 6
+        rows: auto
+    - type: tile
+      entity: number.hesc_v3_ev_usable_battery_capacity
+      name: Usable battery capacity
+      features:
+      - type: numeric-input
+        style: buttons
+      features_position: bottom
+      grid_options:
+        columns: 6
+        rows: auto
+    - type: tile
+      entity: number.hesc_v3_charge_plan_grid_charging_power
+      name: Grid charging power
+      features:
+      - type: numeric-input
+        style: buttons
+      features_position: bottom
+      grid_options:
+        columns: 6
+        rows: auto
+  - type: grid
+    column_span: 3
+    cards:
+    - type: markdown
+      content: '{%- set r = state_attr(''sensor.hesc_v3_charge_plan'', ''plan'') -%}{%- set p = r if r is mapping else (r | from_json if r else {}) -%}
+
+        {%- set on = p.active | default(false) -%}
+
+        {%- set q = p.quarters | default(0) -%}
+
+        {%- set st = states(''sensor.hesc_v3_charge_plan_status'') -%}
+
+        {%- set solo = st.startswith(''EV already charging'') -%}
+
+        <ha-alert alert-type="info">{{ ''EV is already charging by itself (e.g. on solar). The plan watches and does not take over. Need full power now? Start it in your charger app.'' if solo else (''Planned: waiting for the first planned quarter'' if (st.startswith(''Finished'') and q > 0) else st) }}</ha-alert>
+
+
+        <center><b>{{ ''ACTIVE PLAN'' if on else ''PLAN (not active)'' }}</b> · ready by <b>{{ p.deadline_text | default(''–'') }}</b>{{ '' (weekly schedule)'' if p.get(''source'') == ''repeating'' else '' (fixed day per week)'' }}</center>
+
+
+        | CHARGING TIME | ENERGY PRICE |
+
+        |:--|--:|
+
+        | <font size="6" color="#22c55e"><b>{{ ''–'' if solo else (p.charge_time | default(''–'') ~ '' h'') }}</b></font> @ {{ p.kw | default(''–'') }} kW | <font size="6" color="#22c55e"><b>{{ (p.avg_price_ct | string | replace(''.'', state_attr(''sensor.hesc_v3_prices'', ''decimal'') or '','')) ~ '' '' ~ (state_attr(''sensor.hesc_v3_prices'', ''minor'') or ''ct'') ~ ''/kWh'' if (p.avg_price_ct is not none and q > 0 and not solo) else ''–'' }}</b></font> |
+
+
+        | BATTERY NOW | GOAL | STILL NEEDED | STATUS |
+
+        |:--|:--|:--|:--|
+
+        | <font size="4"><b>{{ (p.soc | round(0) | int ~ ''%'') if p.soc is not none else ''?'' }}</b></font> | <font size="4"><b>{{ p.goal | default(''–'') }}%</b></font> | <font size="4"><b>{{ p.need_kwh | default(0) }} kWh</b></font>{{ '' (<ha-icon icon="hesc:zon" style="--mdc-icon-size:16px;vertical-align:-3px;margin-right:4px"></ha-icon>~'' ~ p.solar_kwh ~ '' kWh sun)'' if (p.solar_kwh | default(0)) > 0 else '''' }}{{ '''' if solo else ('' · '' ~ (p.quarters | default(0)) ~ '' × 15 min grid'') }}{{ '' · <ha-icon icon="hesc:waarschuwing" style="--mdc-icon-size:16px;vertical-align:-3px;margin-right:4px"></ha-icon>not enough time left for the goal'' if (on and not solo and (p.short_of_time | default(false))) else '''' }} | <font size="4" color="{{ ''#22c55e'' if on else ''#cbd5e1'' }}"><b>{{ ''<ha-icon icon="hesc:vinkje-cirkel" style="--mdc-icon-size:20px;vertical-align:-4px;margin-right:4px"></ha-icon>already there'' if (p.need_kwh is defined and p.need_kwh == 0 and p.soc is not none) else (''<ha-icon icon="hesc:zon" style="--mdc-icon-size:20px;vertical-align:-4px;margin-right:4px"></ha-icon>charging by itself'' if (on and solo) else ((''<ha-icon icon="hesc:zandloper" style="--mdc-icon-size:20px;vertical-align:-4px;margin-right:4px"></ha-icon>planned'' if on else ''<ha-icon icon="hesc:vergrootglas" style="--mdc-icon-size:20px;vertical-align:-4px;margin-right:4px"></ha-icon>preview'') if p.quarters | default(0) > 0 else ''–'')) }}</b></font> |
+
+        {%- if p.prices_complete is defined and not p.prices_complete %}
+
+
+        <small><ha-icon icon="hesc:info" style="--mdc-icon-size:14px;vertical-align:-2px;margin-right:4px"></ha-icon>Prices known until {{ as_timestamp(p.prices_until) | timestamp_custom(''%a %H:%M'') if p.prices_until else ''–'' }}. Final plan follows when all prices up to departure are known.</small>
+
+        {%- endif %}'
+      grid_options:
+        columns: 18
+        rows: auto
+    - type: custom:hesc-price-chart
+      title: Day-ahead prices per quarter (cents per kWh)
+      icon: hesc:euro-klok
+      height: 280
+      entities:
+        setup: sensor.hesc_v3_setup
+        solar_today: sensor.solcast_pv_forecast_forecast_today
+        solar_tomorrow: sensor.solcast_pv_forecast_forecast_tomorrow
+        prices: sensor.hesc_v3_prices
+        plan: sensor.hesc_v3_charge_plan
+        price_forecast: sensor.hesc_v3_price_forecast
+        cheap_on: switch.hesc_v3_charge_plan_take_cheap_chances
+        cheap_price: number.hesc_v3_charge_plan_opportunity_price
+        ev_full: number.hesc_v3_ev_full_at_battery_level
+        ev_kwh: number.hesc_v3_ev_usable_battery_capacity
+        plan_kw: number.hesc_v3_charge_plan_grid_charging_power
+        p_start: number.hesc_v3_forecast_power_to_start
+        p_hold: number.hesc_v3_forecast_power_to_hold
+      grid_options:
+        columns: 18
+        rows: auto
+      visibility:
+      - condition: state
+        entity: binary_sensor.hesc_v3_prices_available
+        state: 'on'
+    - type: markdown
+      grid_options:
+        columns: 18
+        rows: auto
+      content: '<ha-alert alert-type="warning" title="Prices not available">{%- set e = states(''text.hesc_v3_day_ahead_price_sensor'') | trim -%}{{ ''No day-ahead price sensor chosen yet (Settings → Advanced → Plan and notifications).'' if e in ['''', ''unknown'', ''unavailable''] else ''The price sensor <code>'' ~ e ~ ''</code> gives no prices to HESC right now. Check the price source in Settings (Price source: a sensor with a price list, or EnergyZero / ANWB, EasyEnergy, Tibber, Nord Pool official). Check or reload the price integration; the graph returns by itself when prices are back.'' }}</ha-alert>'
+      visibility:
+      - condition: state
+        entity: binary_sensor.hesc_v3_prices_available
+        state_not: 'on'
+  badges: []
+- type: sections
+  title: Settings
+  path: settings
+  icon: hesc:schuifregelaars
+  max_columns: 4
+  sections:
+  - type: grid
+    cards:
+    - type: custom:hesc-style
+      style:
+        ha-markdown$: 'h2 ha-icon { --mdc-icon-size: 24px; margin-right: 4px; }
+
+          h2 a ha-icon { --mdc-icon-size: 20px; margin-right: 0; vertical-align: 1px; }
+
+          h2 ha-icon[icon="hesc:laadpaal"] { vertical-align: 4px; }'
+      grid_options:
+        columns: 12
+        rows: auto
+      card:
+        type: markdown
+        content: '## <ha-icon icon="hesc:laadpaal"></ha-icon> 1 · Your charger — required <a href="/hesc-v3/guide" title="Guide: how smart charging works"><ha-icon icon="mdi:information-outline" style="--mdc-icon-size:20px;color:#8ab4f8;vertical-align:-2px"></ha-icon></a>
+
+          This is all HESC needs from you. Choose your charger type first: HESC fills in the brand values and suggests the entities it finds. When the check below is green the fields stay closed; open them with **Charger fields**. Something wrong? They open by themselves.'
+    - type: vertical-stack
+      grid_options:
+        columns: 12
+      cards:
+      - type: custom:hesc-style
+        style: '#root > *:first-child { flex: 3 1 0 !important; } #root > *:last-child { flex: 1 1 0 !important; }'
+        card:
+          type: horizontal-stack
+          cards:
+          - type: tile
+            entity: select.hesc_v3_charger_type
+            name: Charger type
+            icon: mdi:ev-plug-type2
+            hide_state: true
+            vertical: false
+            features_position: bottom
+            features:
+            - type: select-options
+          - type: tile
+            entity: button.hesc_v3_search_charger_entities_again
+            name: Search again
+            icon: mdi:magnify
+            hide_state: true
+            vertical: true
+            tap_action:
+              action: perform-action
+              perform_action: button.press
+              target:
+                entity_id: button.hesc_v3_search_charger_entities_again
+            icon_tap_action:
+              action: perform-action
+              perform_action: button.press
+              target:
+                entity_id: button.hesc_v3_search_charger_entities_again
+      - type: tile
+        entity: switch.hesc_v3_show_charger_fields
+        name: Charger fields
+        icon: mdi:form-textbox
+        hide_state: true
+        vertical: false
+        features_position: inline
+        features:
+        - type: toggle
+    - type: conditional
+      conditions:
+      - condition: or
+        conditions:
+        - entity: switch.hesc_v3_show_charger_fields
+          state: 'on'
+        - entity: binary_sensor.hesc_v3_check_charger
+          state: 'off'
+      card:
+        type: entities
+        entities:
+        - type: attribute
+          entity: sensor.hesc_v3_setup
+          attribute: hesc_ev_connected_sensor
+          name: EV connected (binary or status sensor)
+        - type: attribute
+          entity: sensor.hesc_v3_setup
+          attribute: hesc_ev_power_sensor
+          name: Charging power (W or kW)
+        - type: attribute
+          entity: sensor.hesc_v3_setup
+          attribute: hesc_charger_mode_entity
+          name: Charger mode entity
+        - type: attribute
+          entity: sensor.hesc_v3_setup
+          attribute: hesc_charger_eco_value
+          name: Value(s) that mean solar charging, comma separated
+        - type: button
+          name: Change sources and charger
+          icon: mdi:cog
+          action_name: Setup screen
+          tap_action:
+            action: navigate
+            navigation_path: /config/integrations/integration/hesc
+    - type: markdown
+      grid_options:
+        columns: 12
+        rows: auto
+      content: '{%- set ok = ''<ha-icon icon="hesc:vinkje-cirkel" style="--mdc-icon-size:16px;vertical-align:-3px;margin-right:4px"></ha-icon>'' -%}{%- set no = ''<ha-icon icon="hesc:kruis-cirkel" style="--mdc-icon-size:16px;vertical-align:-3px;margin-right:4px"></ha-icon>'' -%}{%- set off = ''<ha-icon icon="mdi:circle-outline" style="--mdc-icon-size:16px;vertical-align:-3px;margin-right:4px"></ha-icon>'' -%}{%- set warn = ''<ha-icon icon="hesc:waarschuwing" style="--mdc-icon-size:16px;vertical-align:-3px;margin-right:4px"></ha-icon>'' -%}
+
+        {%- macro exists(e) -%}{{ e not in ['''', ''unknown'', ''unavailable''] and state_attr(e, ''friendly_name'') is not none }}{%- endmacro -%}
+
+        {%- macro now(e) -%}{%- set u = state_attr(e, ''unit_of_measurement'') -%}{{ states(e) }}{{ '' '' ~ u if u else '''' }}{%- endmacro -%}
+
+        {%- macro val(e) -%}{%- set u = state_attr(e, ''unit_of_measurement'') or '''' -%}{%- set x = states(e) | float(none) -%}{{ (''%g'' | format(x | round(1 if u | lower in [''kw'', ''kwh''] else 0))) if x is not none else states(e) }}{{ '' '' ~ u if u else '''' }}{%- endmacro -%}
+
+        {%- macro code(e) -%}<code>{{ e if e not in ['''', ''unknown''] else ''–'' }}</code>{%- endmacro -%}
+
+        {%- set pr = state_attr(''sensor.hesc_v3_charger_profile'', ''profile'') or {} -%}
+
+        {%- macro sug(key, good) -%}{%- if not good and (pr.get(key) or []) | count > 0 -%}<br>&nbsp;&nbsp;<ha-icon icon="hesc:lampje" style="--mdc-icon-size:16px;vertical-align:-3px;margin-right:4px"></ha-icon> Suggested: {{ pr.get(key) | map(''string'') | map(''regex_replace'', ''^(.*)$'', ''<code>\\1</code>'') | join('' or '') }}{%- endif -%}{%- endmacro -%}
+
+        {%- set C = {''charger'': ''binary_sensor.hesc_v3_check_charger'', ''sources'': ''binary_sensor.hesc_v3_check_sources'', ''weather'': ''binary_sensor.hesc_v3_check_weather_station'', ''plan'': ''binary_sensor.hesc_v3_check_charge_plan'', ''kick'': ''binary_sensor.hesc_v3_check_home_battery_and_ev''} -%}
+
+        {%- set wx = is_state(''switch.hesc_v3_use_local_weather_station'', ''on'') -%}
+
+        {%- set kick = is_state(''switch.hesc_v3_home_battery_and_ev_kickstart'', ''on'') -%}
+
+        {%- set minc = is_state(''switch.hesc_v3_minimum_charge'', ''on'') -%}
+
+        {%- set used = [''charger'', ''sources'', ''plan''] + ([''weather''] if wx else []) + ([''kick''] if kick else []) -%}
+
+        {%- set n2 = namespace(g=0) -%}{%- for k in used -%}{%- if is_state(C[k], ''on'') -%}{%- set n2.g = n2.g + 1 -%}{%- endif -%}{%- endfor -%}
+
+        {%- set good = n2.g -%}{%- set total = used | count -%}
+
+        {%- set unused = ([] if wx else [''weather station'']) + ([] if minc else [''minimum charge'']) + ([] if kick else [''home battery and EV'']) -%}
+
+        {%- set conn = state_attr(''sensor.hesc_v3_setup'', ''hesc_ev_connected_sensor'') | trim -%}
+
+        {%- set pow = state_attr(''sensor.hesc_v3_setup'', ''hesc_ev_power_sensor'') | trim -%}
+
+        {%- set mode = state_attr(''sensor.hesc_v3_setup'', ''hesc_charger_mode_entity'') | trim -%}
+
+        {%- set solar = (state_attr(''sensor.hesc_v3_setup'', ''hesc_charger_eco_value'') | trim).split('','') | map(''trim'') | list -%}
+
+        {%- set pv = state_attr(''sensor.hesc_v3_setup'', ''hesc_pv_power_sensor'') | trim -%}
+
+        {%- set grid = state_attr(''sensor.hesc_v3_setup'', ''hesc_grid_power_sensor'') | trim -%}
+
+        {%- set fc = state_attr(''sensor.hesc_v3_setup'', ''hesc_forecast_now_sensor'') | trim -%}{%- set fa = state_attr(''sensor.hesc_v3_setup'', ''hesc_forecast_attribute'') | trim -%}
+
+        {%- set fcw = (state_attr(fc, fa) if fa not in ['''', ''unknown''] else states(fc)) | int(0) -%}
+
+        {%- set sa = is_state(''switch.hesc_v3_use_hpvc'', ''off'') -%}
+
+        {%- set hpvc_ok = exists(state_attr(''sensor.hesc_v3_setup'', ''hesc_hpvc_enabled_entity'') | trim) == ''True'' -%}
+
+        {%- set ss = state_attr(''sensor.hesc_v3_setup'', ''hesc_charger_start_stop_entity'') | trim -%}
+
+        {%- set rs = state_attr(''sensor.hesc_v3_setup'', ''hesc_charger_resume_entity'') | trim -%}
+
+        {%- set price = states(''text.hesc_v3_day_ahead_price_sensor'') | trim -%}
+
+        {%- set today = state_attr(''sensor.hesc_v3_setup'', ''hesc_solar_today_sensor'') | trim -%}
+
+        {%- set tomorrow = (state_attr(''sensor.hesc_v3_prices'', ''raw_tomorrow'') or []) | count > 0 -%}
+
+        ## {{ ok ~ '' Setup verified · all OK'' if good == total else warn ~ '' Setup · '' ~ (total - good) ~ ('' item needs'' if total - good == 1 else '' items need'') ~ '' attention'' }}
+
+        {%- if is_state(C.charger, ''on'') %}
+
+        {{ ok }} **Charger** {{ pr.type if pr.get(''known'') else (pr.get(''type'') or ''type not chosen'') }} · EV {{ states(conn) }} · {{ val(pow) }} · {{ ''solar mode'' if states(mode) in solar else warn ~ '' not in solar mode ('' ~ states(mode) ~ '')'' }}
+
+        {%- else %}
+
+        {{ no }} **Charger** — missing: {{ state_attr(C.charger, ''missing'') }}. The fields above have opened.
+
+        &nbsp;&nbsp;{{ ok if exists(conn) == ''True'' else no }} EV connected: {{ code(conn) }} · now {{ states(conn) }}{{ sug(''connected'', exists(conn) == ''True'') }}
+
+        &nbsp;&nbsp;{{ ok if exists(pow) == ''True'' else no }} Charging power: {{ code(pow) }} · now {{ now(pow) }}{{ sug(''power'', exists(pow) == ''True'') }}
+
+        &nbsp;&nbsp;{{ ok if exists(mode) == ''True'' else no }} Solar mode: {{ code(mode) }} · now {{ states(mode) }}{{ sug(''mode'', exists(mode) == ''True'') }}
+
+        {%- endif %}
+
+        {%- if is_state(C.sources, ''on'') %}
+
+        {{ ok }} **Sources** PV {{ val(pv) }}{{ '' · grid '' ~ val(grid) if exists(grid) == ''True'' else '''' }} · forecast {{ fcw }} W · {{ ''no HPVC (standalone)'' if sa else ''HPVC found'' }}
+
+        {%- else %}
+
+        {{ no }} **Sources** — missing: {{ state_attr(C.sources, ''missing'') }}. Open “Change sources” in column 2.
+
+        &nbsp;&nbsp;{{ ok if exists(pv) == ''True'' else no }} PV power: {{ code(pv) }} · now {{ now(pv) }}
+
+        &nbsp;&nbsp;{{ (ok if exists(grid) == ''True'' else no) if grid not in ['''', ''unknown''] else off }} Grid power: {{ code(grid) }}{{ '' · now '' ~ now(grid) if exists(grid) == ''True'' else '' · optional'' }}
+
+        &nbsp;&nbsp;{{ ok if exists(fc) == ''True'' else no }} Solar forecast: {{ code(fc) }}{{ '' ('' ~ fa ~ '')'' if fa not in ['''', ''unknown''] else '''' }} · now {{ fcw }} W
+
+        {%- if not sa %}
+
+        &nbsp;&nbsp;{{ ok if hpvc_ok else no }} HPVC: {{ ''found'' if hpvc_ok else ''not found — is Home PV Control installed?'' }}
+
+        {%- endif %}
+
+        {%- endif %}
+
+        {%- if wx %}
+
+        {%- if is_state(C.weather, ''on'') %}
+
+        {{ ok }} **Weather station** {{ val(state_attr(''sensor.hesc_v3_setup'', ''hesc_irradiance_sensor'') | trim) }}
+
+        {%- else %}
+
+        {{ no }} **Weather station** — missing: {{ state_attr(C.weather, ''missing'') }}. Its settings in column 2 have opened.
+
+        {%- endif %}
+
+        {%- endif %}
+
+        {%- if is_state(C.plan, ''on'') %}
+
+        {{ ok }} **Charge plan** price now {{ (states(''sensor.hesc_v3_prices'') | float(0) * 100) | round(1) }} {{ (state_attr(''sensor.hesc_v3_prices'', ''minor'') or ''ct'') }} · tomorrow {{ ''known'' if tomorrow else ''not yet'' }} · sun today {{ states(today) | float(0) | round(0) | int }} kWh{{ ('' · minimum '' ~ states(''number.hesc_v3_minimum_charge_level'') | int ~ ''% within '' ~ states(''number.hesc_v3_minimum_charge_within'') | int ~ '' h'') if minc else '''' }}
+
+        {%- else %}
+
+        {{ no }} **Charge plan** — missing: {{ state_attr(C.plan, ''missing'') }}. The Plan and notifications settings in column 3 have opened.
+
+        &nbsp;&nbsp;{{ ok if exists(ss) == ''True'' else off }} Start/stop switch: {{ code(ss) }} · now {{ states(ss) }}
+
+        &nbsp;&nbsp;{{ ok if exists(rs) == ''True'' else off }} Back to solar mode: {{ code(rs) }}
+
+        &nbsp;&nbsp;{{ ok if exists(price) == ''True'' and state_attr(price, ''raw_today'') is not none else no }} Price sensor: {{ code(price) }}
+
+        &nbsp;&nbsp;{{ ok if exists(today) == ''True'' else no }} Solar forecast today: {{ code(today) }}
+
+        {%- endif %}
+
+        {%- if kick %}
+
+        {%- if is_state(C.kick, ''on'') %}
+
+        {%- set lv = (states(''text.hesc_v3_home_battery_level_sensors'') | trim).split('','') | map(''trim'') | map(''states'') | map(''float'', none) | reject(''none'') | list -%}
+
+        {%- set pw = (states(''text.hesc_v3_home_battery_power_sensors'') | trim).split('','') | map(''trim'') | map(''states'') | map(''float'', none) | reject(''none'') | list %}
+
+        {{ ok }} **Home battery and EV** home batteries {{ (lv | sum / lv | count) | round(0) | int if lv | count else ''–'' }}% · {{ ''charging '' if pw | sum > 50 else ''discharging '' if pw | sum < -50 else ''idle'' }}{{ ((pw | sum) | abs | int ~ '' W'') if (pw | count and (pw | sum) | abs > 50) else '''' }}{{ ('' · EV '' ~ (states(''sensor.hesc_v3_ev_battery_level_with_fallbacks'') | float | round(0) | int) ~ ''%'') if states(''sensor.hesc_v3_ev_battery_level_with_fallbacks'') | is_number else '''' }}
+
+        {%- else %}
+
+        {{ no }} **Home battery and EV** — missing: {{ state_attr(C.kick, ''missing'') }}. Its settings in column 3 have opened.
+
+        {%- endif %}
+
+        {%- endif %}
+
+        {%- if unused | count %}
+
+        {{ off }} Not used: {{ unused | join('', '') }}
+
+        {%- endif %}
+
+        **Now:** {{ states(''sensor.hesc_v3_state'') }} · {{ states(''sensor.hesc_v3_charge_plan_status'') }}{{ '' · '' ~ states(''sensor.hesc_v3_home_battery_and_ev_status'') if kick and states(''sensor.hesc_v3_home_battery_and_ev_status'') not in [states(''sensor.hesc_v3_charge_plan_status''), ''Off'', ''Waiting''] else '''' }}
+
+        '
+    - type: vertical-stack
+      grid_options:
+        columns: 12
+      cards:
+      - type: custom:hesc-style
+        style: 'ha-card { border-bottom-left-radius: 0; border-bottom-right-radius: 0; }'
+        visibility:
+        - condition: state
+          entity: switch.hesc_v3_use_hpvc
+          state: 'on'
+        card:
+          type: tile
+          entity: switch.hesc_v3_apply_advice_automatically
+          name: Apply advice automatically
+          icon: mdi:auto-fix
+          hide_state: true
+          vertical: false
+          features_position: inline
+          features:
+          - type: toggle
+      - type: custom:hesc-style
+        style: 'ha-card { border-top-left-radius: 0; border-top-right-radius: 0; } ha-markdown { padding: 8px 16px 12px !important; line-height: 1.45; }'
+        card:
+          type: markdown
+          content: '{%- set a = ''sensor.hesc_v3_advised_start_threshold'' -%}
+
+            {%- set s = states(a) -%}
+
+            {%- set f = ''{:,.0f}'' -%}
+
+            {%- set upd = (as_timestamp(state_attr(a, ''updated'')) | timestamp_custom(''%a %H:%M'')) if state_attr(a, ''updated'') else ''–'' -%}
+
+            {%- if s in [''unknown'', ''unavailable''] -%}
+
+            <font color="#94a3b8">Working it out…</font>
+
+            {%- else -%}
+
+            {%- set l1 = ''**Now** '' ~ f.format(states(''number.hesc_v3_forecast_power_to_start'') | float(0)) ~ '' / '' ~ f.format(states(''number.hesc_v3_forecast_power_to_hold'') | float(0)) ~ '' W'' ~ (('' · **Advice** '' ~ f.format(state_attr(a, ''advised_start'')) ~ '' / '' ~ f.format(state_attr(a, ''advised_hold'')) ~ '' W'') if state_attr(a, ''advised_start'') else '''') -%}
+
+            {%- set l2 = ''**Based on** '' ~ (state_attr(a, ''sun_sessions'') if state_attr(a, ''method'') == ''sun_share'' else state_attr(a, ''good_sessions'')) ~ '' sessions ('' ~ state_attr(a, ''days'') ~ '' days)'' ~ (('' · need '' ~ state_attr(a, ''need_sessions'') ~ '' on '' ~ state_attr(a, ''need_days'') ~ '' days'') if s == ''collecting'' else '''') -%}
+
+            {%- set l3 = (''**Sun share** '' ~ state_attr(a, ''sun_share_above'') ~ ''% from the advice up · '' ~ state_attr(a, ''sun_share_below'') ~ ''% below (goal '' ~ state_attr(a, ''sun_target'') ~ ''%)'') if state_attr(a, ''method'') == ''sun_share'' and state_attr(a, ''sun_share_below'') is not none else ((''**Forecast** at start '' ~ f.format(state_attr(a, ''lowest_good_forecast'')) ~ '' – '' ~ f.format(state_attr(a, ''median_good_forecast'')) ~ '' W'') if state_attr(a, ''lowest_good_forecast'') else '''') -%}
+
+            {%- set l4 = ''**Auto** '' ~ (''on'' if is_state(''switch.hesc_v3_apply_advice_automatically'', ''on'') else ''off'') ~ '' (checked '' ~ upd ~ '')'' ~ (('' · last '' ~ state_attr(a, ''last_change'')) if state_attr(a, ''last_change'') else '''') ~ (('' · next step from '' ~ (as_timestamp(state_attr(a, ''next_step_from'')) | timestamp_custom(''%a %d %b''))) if state_attr(a, ''next_step_from'') else '''') ~ ('' · seasonal on'' if is_state(''switch.hesc_v3_seasonal_start_threshold'', ''on'') else '''') -%}
+
+            {%- set sa = is_state(''switch.hesc_v3_use_hpvc'', ''off'') -%}
+
+            {%- set l2 = (state_attr(a, ''status_text'') or '''') if sa else l2 -%}
+
+            {%- set l3 = '''' if sa else l3 -%}
+
+            {%- set l4 = (''**Seasonal** on'' if is_state(''switch.hesc_v3_seasonal_start_threshold'', ''on'') else '''') if sa else l4 -%}
+
+            {%- set pa = ''sensor.hesc_v3_phase_advice'' -%}
+
+            {%- set l5 = (''**Phases** ('' ~ states(pa) | replace(''_'', '' '') ~ '') '' ~ state_attr(pa, ''text'')) if state_attr(pa, ''text'') and states(pa) not in [''unknown'', ''unavailable''] else '''' -%}
+
+            {{ [l1, l2, l3, l4, l5] | reject(''eq'', '''') | join(''<br>'') }}
+
+            {%- endif -%}'
+    - type: custom:hesc-style
+      style:
+        .: 'ha-card { height: 100%; }'
+        ha-markdown$: 'h2 ha-icon { --mdc-icon-size: 24px; margin-right: 4px; }
+
+          h2 a ha-icon { --mdc-icon-size: 20px; margin-right: 0; vertical-align: 1px; }
+
+          h2 ha-icon[icon="hesc:schuifregelaars"] { vertical-align: 3.4px; }'
+      grid_options:
+        columns: 12
+      card:
+        type: markdown
+        content: '{%- macro n(e) -%}{{ ''%g'' | format(states(e) | float(0)) }}{%- endmacro -%}
+
+          {%- set wx = is_state(''switch.hesc_v3_use_local_weather_station'', ''on'') -%}
+
+          {%- set kick = is_state(''switch.hesc_v3_home_battery_and_ev_kickstart'', ''on'') -%}
+
+          {%- set minc = is_state(''switch.hesc_v3_minimum_charge'', ''on'') -%}
+
+          ## <ha-icon icon="hesc:schuifregelaars"></ha-icon> Your settings
+
+          **Start / hold** forecast {{ n(''number.hesc_v3_forecast_power_to_start'') }} / {{ n(''number.hesc_v3_forecast_power_to_hold'') }} W{{ ('' · weather station '' ~ n(''number.hesc_v3_irradiance_to_start'') ~ '' / '' ~ n(''number.hesc_v3_irradiance_to_hold'') ~ '' W/m²'') if wx else '''' }}
+
+          **EV** full at {{ n(''number.hesc_v3_ev_full_at_battery_level'') }}% · battery {{ n(''number.hesc_v3_ev_usable_battery_capacity'') }} kWh · grid charging {{ n(''number.hesc_v3_charge_plan_grid_charging_power'') }} kW · charging above {{ n(''number.hesc_v3_ev_charging_threshold'') }} W
+
+          **Timing** stable {{ n(''number.hesc_v3_conditions_stable_before_release'') }} · wait for charger {{ n(''number.hesc_v3_wait_for_charger_to_start'') }} · dip {{ n(''number.hesc_v3_allowed_solar_dip'') }} · stop {{ n(''number.hesc_v3_charger_stopped_before_restore'') }} · max {{ n(''number.hesc_v3_maximum_release_duration'') }} · cooldown {{ n(''number.hesc_v3_cooldown_after_release'') }} min · max {{ n(''number.hesc_v3_failed_releases_per_day_max'') }} failed releases a day
+
+          **Charge plan** {{ (''cheap below '' ~ (states(''number.hesc_v3_charge_plan_opportunity_price'') | float(0) * 100) | round(1) ~ '' '' ~ (state_attr(''sensor.hesc_v3_prices'', ''minor'') or ''ct'')) if is_state(''switch.hesc_v3_charge_plan_take_cheap_chances'', ''on'') else ''cheap chances off'' }} · final check {{ n(''number.hesc_v3_charge_plan_final_check_before_ready_by_time'') }} min{{ ('' · minimum '' ~ n(''number.hesc_v3_minimum_charge_level'') ~ ''% within '' ~ n(''number.hesc_v3_minimum_charge_within'') ~ '' h'') if minc else '''' }}
+
+          **Advice** last {{ n(''number.hesc_v3_advice_based_on_last'') }} days · at least {{ n(''number.hesc_v3_advice_minimum_sessions'') }} sessions
+
+          <small>Change a value in the block on the right (column 3 · Advanced).</small>'
+    - type: vertical-stack
+      grid_options:
+        columns: 12
+      cards:
+      - type: horizontal-stack
+        cards:
+        - type: tile
+          entity: button.hesc_v3_settings_back_up
+          name: Back up settings
+          icon: mdi:content-save-cog-outline
+          color: blue
+          hide_state: true
+          vertical: true
+          tap_action:
+            action: perform-action
+            perform_action: button.press
+            target:
+              entity_id: button.hesc_v3_settings_back_up
+          icon_tap_action:
+            action: perform-action
+            perform_action: button.press
+            target:
+              entity_id: button.hesc_v3_settings_back_up
+        - type: tile
+          entity: button.hesc_v3_settings_restore
+          name: Restore back-up
+          icon: mdi:backup-restore
+          color: amber
+          hide_state: true
+          vertical: true
+          tap_action:
+            action: perform-action
+            perform_action: button.press
+            target:
+              entity_id: button.hesc_v3_settings_restore
+            confirmation:
+              text: Put all HESC settings back to the last back-up?
+          icon_tap_action:
+            action: perform-action
+            perform_action: button.press
+            target:
+              entity_id: button.hesc_v3_settings_restore
+            confirmation:
+              text: Put all HESC settings back to the last back-up?
+        - type: tile
+          entity: button.hesc_v3_settings_to_standard_values
+          name: Standard values
+          icon: mdi:restore
+          color: red
+          hide_state: true
+          vertical: true
+          tap_action:
+            action: perform-action
+            perform_action: button.press
+            target:
+              entity_id: button.hesc_v3_settings_to_standard_values
+            confirmation:
+              text: Put thresholds, timing and advice back to the HESC standard values? A back-up is made first, so you can undo this with "Restore back-up".
+          icon_tap_action:
+            action: perform-action
+            perform_action: button.press
+            target:
+              entity_id: button.hesc_v3_settings_to_standard_values
+            confirmation:
+              text: Put thresholds, timing and advice back to the HESC standard values? A back-up is made first, so you can undo this with "Restore back-up".
+      - type: markdown
+        content: <small><ha-icon icon="hesc:opslaan" style="--mdc-icon-size:14px;vertical-align:-2px;margin-right:4px"></ha-icon>{{ states('sensor.hesc_v3_settings_back_up_info') if states('sensor.hesc_v3_settings_back_up_info') not in ['unknown', ''] else 'No back-up yet' }}</small>
+        text_only: true
+      - type: custom:hesc-style
+        style:
+          ha-markdown$: 'h2 ha-icon { --mdc-icon-size: 24px; margin-right: 4px; }
+
+            h2 a ha-icon { --mdc-icon-size: 20px; margin-right: 0; vertical-align: 1px; }
+
+            h2 ha-icon[icon="hesc:euro"] { vertical-align: 1px; }'
+        card:
+          type: markdown
+          content: '## <ha-icon icon="hesc:euro"></ha-icon> Charging costs
+
+            Optional. Adds a <b>Costs</b> button at the top of Main that opens an overview of what went into the EV.'
+      - type: horizontal-stack
+        cards:
+        - type: tile
+          entity: switch.hesc_v3_charging_costs_page
+          name: Use
+          icon: mdi:cash-multiple
+          hide_state: true
+          vertical: false
+          features_position: inline
+          features:
+          - type: toggle
+        - type: tile
+          entity: switch.hesc_v3_show_cost_settings
+          name: Settings
+          icon: mdi:tune-vertical
+          hide_state: true
+          vertical: false
+          features_position: inline
+          features:
+          - type: toggle
+      - type: conditional
+        conditions:
+        - entity: switch.hesc_v3_show_cost_settings
+          state: 'on'
+        card:
+          type: entities
+          entities:
+          - entity: number.hesc_v3_feed_in_compensation
+            name: Value of a solar kWh (feed-in compensation, 0 = free)
+          - entity: switch.hesc_v3_costs_price_is_all_in
+            name: Price from the price source is already all-in
+          - type: conditional
+            conditions:
+            - entity: switch.hesc_v3_costs_price_is_all_in
+              state: 'off'
+            row:
+              entity: number.hesc_v3_costs_mark_up_per_kwh_energy_tax_supplier
+              name: Mark-up per kWh (energy tax + supplier)
+          - type: conditional
+            conditions:
+            - entity: switch.hesc_v3_costs_price_is_all_in
+              state: 'off'
+            row:
+              entity: number.hesc_v3_costs_vat
+              name: VAT over price + mark-up
+    column_span: 2
+  - type: grid
+    cards:
+    - type: custom:hesc-style
+      style:
+        ha-markdown$: 'h2 ha-icon { --mdc-icon-size: 24px; margin-right: 4px; }
+
+          h2 a ha-icon { --mdc-icon-size: 20px; margin-right: 0; vertical-align: 1px; }
+
+          h2 ha-icon[icon="hesc:link"] { vertical-align: 1.6px; }'
+      grid_options:
+        columns: 12
+      card:
+        type: markdown
+        content: '{% if is_state(''switch.hesc_v3_use_hpvc'', ''off'') %}## <ha-icon icon="hesc:link"></ha-icon> 2 · Sources <a href="/hesc-v3/guide" title="Guide: how smart charging works"><ha-icon icon="mdi:information-outline" style="--mdc-icon-size:20px;color:#8ab4f8;vertical-align:-2px"></ha-icon></a>
+
+          Running **without HPVC**. Pick your own PV and grid power sensors below. The solar forecast (Solcast, cautious estimate) is filled in on install. Without HPVC nothing is curtailed, so there is no release step: the charger starts on solar by itself, HESC follows it and gives advice.{% else %}## <ha-icon icon="hesc:link"></ha-icon> 2 · Sources <a href="/hesc-v3/guide" title="Guide: how smart charging works"><ha-icon icon="mdi:information-outline" style="--mdc-icon-size:20px;color:#8ab4f8;vertical-align:-2px"></ha-icon></a>
+
+          **PV & grid from HPVC** takes over the PV and grid sensors from Home PV Control. Only use it if HPVC sees **all** your solar panels: HESC needs your total solar power. Switching it off puts your own sensors back. The solar forecast (Solcast, cautious estimate) and the HPVC switch are filled in on install.{% endif %}'
+    - type: tile
+      entity: switch.hesc_v3_use_hpvc
+      name: Use HPVC
+      icon: mdi:link-variant
+      hide_state: true
+      vertical: false
+      features_position: inline
+      features:
+      - type: toggle
+      grid_options:
+        columns: 12
+    - type: conditional
+      conditions:
+      - entity: switch.hesc_v3_use_hpvc
+        state: 'on'
+      card:
+        type: tile
+        entity: switch.hesc_v3_pv_grid_from_hpvc
+        name: PV & grid from HPVC
+        icon: mdi:link-variant
+        hide_state: true
+        vertical: false
+        features_position: inline
+        features:
+        - type: toggle
+        grid_options:
+          columns: 12
+      grid_options:
+        columns: 12
+    - type: conditional
+      conditions:
+      - condition: or
+        conditions:
+        - entity: binary_sensor.hesc_v3_setup_pv_and_grid_from_hpvc
+          state: 'off'
+        - entity: switch.hesc_v3_use_hpvc
+          state: 'off'
+      - condition: or
+        conditions:
+        - entity: switch.hesc_v3_change_automatic_sources
+          state: 'on'
+        - entity: binary_sensor.hesc_v3_check_sources
+          state: 'off'
+      card:
+        type: entities
+        entities:
+        - type: attribute
+          entity: sensor.hesc_v3_setup
+          attribute: hesc_pv_power_sensor
+          name: Actual PV power
+        - type: attribute
+          entity: sensor.hesc_v3_setup
+          attribute: hesc_grid_power_sensor
+          name: Grid power (negative = export)
+        - type: attribute
+          entity: sensor.hesc_v3_setup
+          attribute: hesc_grid_export_positive
+          name: 'Grid sensor: export is positive (off = import positive, most meters)'
+        - type: button
+          name: Change sources and charger
+          icon: mdi:cog
+          action_name: Setup screen
+          tap_action:
+            action: navigate
+            navigation_path: /config/integrations/integration/hesc
+    - type: tile
+      entity: switch.hesc_v3_change_automatic_sources
+      name: Change sources
+      icon: mdi:pencil-outline
+      hide_state: true
+      vertical: false
+      features_position: inline
+      features:
+      - type: toggle
+      grid_options:
+        columns: 12
+    - type: conditional
+      conditions:
+      - condition: or
+        conditions:
+        - entity: switch.hesc_v3_change_automatic_sources
+          state: 'on'
+        - entity: binary_sensor.hesc_v3_check_sources
+          state: 'off'
+      card:
+        type: entities
+        entities:
+        - type: attribute
+          entity: sensor.hesc_v3_setup
+          attribute: hesc_forecast_now_sensor
+          name: Forecast power now
+        - type: attribute
+          entity: sensor.hesc_v3_setup
+          attribute: hesc_forecast_30m_sensor
+          name: Forecast power +30 min
+        - type: attribute
+          entity: sensor.hesc_v3_setup
+          attribute: hesc_forecast_attribute
+          name: Forecast attribute (empty = state)
+        - type: button
+          name: Change sources and charger
+          icon: mdi:cog
+          action_name: Setup screen
+          tap_action:
+            action: navigate
+            navigation_path: /config/integrations/integration/hesc
+    - type: conditional
+      conditions:
+      - condition: or
+        conditions:
+        - entity: switch.hesc_v3_change_automatic_sources
+          state: 'on'
+        - entity: binary_sensor.hesc_v3_check_sources
+          state: 'off'
+      - entity: switch.hesc_v3_use_hpvc
+        state: 'on'
+      card:
+        type: custom:hesc-style
+        style: '.card-header { font-size: 20px !important; font-weight: 700 !important; line-height: normal !important; color: var(--primary-text-color) !important; letter-spacing: normal !important; }
+
+          .card-header ha-icon, .card-header ha-state-icon { --mdc-icon-size: 24px; position: relative; top: -3px; margin-inline-end: -6px; }'
+        card:
+          type: entities
+          title: HPVC
+          entities:
+          - type: attribute
+            entity: sensor.hesc_v3_setup
+            attribute: hesc_hpvc_enabled_entity
+            name: HPVC enable switch
+          - type: attribute
+            entity: sensor.hesc_v3_setup
+            attribute: hesc_hpvc_limited_entity
+            name: HPVC limiting indicator
+          - type: button
+            name: Change sources and charger
+            icon: mdi:cog
+            action_name: Setup screen
+            tap_action:
+              action: navigate
+              navigation_path: /config/integrations/integration/hesc
+    - type: custom:hesc-style
+      style:
+        ha-markdown$: 'h2 ha-icon { --mdc-icon-size: 24px; margin-right: 4px; }
+
+          h2 a ha-icon { --mdc-icon-size: 20px; margin-right: 0; vertical-align: 1px; }
+
+          h2 ha-icon[icon="hesc:puzzelstuk"] { vertical-align: 3.5px; }'
+      grid_options:
+        columns: 12
+      card:
+        type: markdown
+        content: '## <ha-icon icon="hesc:puzzelstuk"></ha-icon> Optional
+
+          Only needed for some chargers, or for extra detail in the report.'
+    - type: tile
+      entity: switch.hesc_v3_show_optional_settings
+      name: Show optional fields
+      icon: mdi:tune-variant
+      hide_state: true
+      vertical: false
+      features_position: inline
+      features:
+      - type: toggle
+      grid_options:
+        columns: 12
+    - type: conditional
+      conditions:
+      - entity: switch.hesc_v3_show_optional_settings
+        state: 'on'
+      card:
+        type: entities
+        entities:
+        - type: attribute
+          entity: sensor.hesc_v3_setup
+          attribute: hesc_ev_disconnected_values
+          name: Status values meaning "no car" (only for a status sensor)
+        - type: attribute
+          entity: sensor.hesc_v3_setup
+          attribute: hesc_charger_solar_switch_entity
+          name: Extra solar switch
+        - type: attribute
+          entity: sensor.hesc_v3_setup
+          attribute: hesc_ev_green_energy_sensor
+          name: Solar energy counter (kWh from solar in the report)
+        - type: attribute
+          entity: sensor.hesc_v3_setup
+          attribute: hesc_ev_soc_sensor
+          name: EV battery level (explains stops, e.g. EV full)
+        - entity: number.hesc_v3_ev_full_at_battery_level
+          name: EV counts as full at
+        - type: button
+          name: Change sources and charger
+          icon: mdi:cog
+          action_name: Setup screen
+          tap_action:
+            action: navigate
+            navigation_path: /config/integrations/integration/hesc
+    - type: custom:hesc-style
+      style:
+        ha-markdown$: 'h2 ha-icon { --mdc-icon-size: 24px; margin-right: 4px; }
+
+          h2 a ha-icon { --mdc-icon-size: 20px; margin-right: 0; vertical-align: 1px; }
+
+          h2 ha-icon[icon="hesc:zon-wolk"] { vertical-align: 2px; }'
+      grid_options:
+        columns: 12
+      card:
+        type: markdown
+        content: '## <ha-icon icon="hesc:zon-wolk"></ha-icon> Local weather station
+
+          Optional. When off, HESC works on the forecast alone.'
+    - type: horizontal-stack
+      cards:
+      - type: tile
+        entity: switch.hesc_v3_use_local_weather_station
+        name: Use
+        icon: mdi:weather-sunny
+        hide_state: true
+        vertical: false
+        features_position: inline
+        features:
+        - type: toggle
+      - type: tile
+        entity: switch.hesc_v3_show_weather_station_settings
+        name: Settings
+        icon: mdi:tune-vertical
+        hide_state: true
+        vertical: false
+        features_position: inline
+        features:
+        - type: toggle
+      grid_options:
+        columns: 12
+    - type: conditional
+      conditions:
+      - condition: or
+        conditions:
+        - entity: switch.hesc_v3_show_weather_station_settings
+          state: 'on'
+        - condition: and
+          conditions:
+          - entity: switch.hesc_v3_use_local_weather_station
+            state: 'on'
+          - entity: binary_sensor.hesc_v3_check_weather_station
+            state: 'off'
+      card:
+        type: entities
+        entities:
+        - entity: sensor.hesc_v3_solar_forecast_source
+          name: Solar forecast
+        - type: attribute
+          entity: sensor.hesc_v3_setup
+          attribute: hesc_irradiance_sensor
+          name: Irradiance sensor (W/m²)
+        - entity: number.hesc_v3_irradiance_to_start
+          name: Irradiance to start
+        - entity: number.hesc_v3_irradiance_to_hold
+          name: Irradiance to hold
+        - type: button
+          name: Change sources and charger
+          icon: mdi:cog
+          action_name: Setup screen
+          tap_action:
+            action: navigate
+            navigation_path: /config/integrations/integration/hesc
+  - type: grid
+    cards:
+    - type: custom:hesc-style
+      style:
+        ha-markdown$: 'h2 ha-icon { --mdc-icon-size: 24px; margin-right: 4px; }
+
+          h2 a ha-icon { --mdc-icon-size: 20px; margin-right: 0; vertical-align: 1px; }
+
+          h2 ha-icon[icon="hesc:moersleutel"] { vertical-align: 2.1px; }'
+      grid_options:
+        columns: 12
+      card:
+        type: markdown
+        content: '## <ha-icon icon="hesc:moersleutel"></ha-icon> 3 · Advanced — only if needed <a href="/hesc-v3/guide" title="Guide: how smart charging works"><ha-icon icon="mdi:information-outline" style="--mdc-icon-size:20px;color:#8ab4f8;vertical-align:-2px"></ha-icon></a>
+
+          The defaults work for most installations. The advice in the report tells you when a change would help.'
+    - type: tile
+      entity: switch.hesc_v3_show_thresholds
+      name: Charging thresholds
+      icon: mdi:tune-vertical
+      hide_state: true
+      vertical: false
+      features_position: inline
+      features:
+      - type: toggle
+      grid_options:
+        columns: 12
+    - type: conditional
+      conditions:
+      - entity: switch.hesc_v3_show_thresholds
+        state: 'on'
+      card:
+        type: entities
+        entities:
+        - entity: switch.hesc_v3_seasonal_start_threshold
+          name: Start threshold per season (sets the two below every month)
+        - entity: number.hesc_v3_forecast_power_to_start
+          name: Forecast power to start
+        - entity: number.hesc_v3_forecast_power_to_hold
+          name: Forecast power to hold
+        - entity: number.hesc_v3_ev_charging_threshold
+          name: EV counts as charging above
+    - type: tile
+      entity: switch.hesc_v3_show_timing
+      name: Timing
+      icon: mdi:timer-cog-outline
+      hide_state: true
+      vertical: false
+      features_position: inline
+      features:
+      - type: toggle
+      grid_options:
+        columns: 12
+    - type: conditional
+      conditions:
+      - entity: switch.hesc_v3_show_timing
+        state: 'on'
+      card:
+        type: entities
+        entities:
+        - entity: number.hesc_v3_conditions_stable_before_release
+          name: Conditions stable before release
+        - entity: number.hesc_v3_wait_for_charger_to_start
+          name: Wait for charger to start
+        - entity: number.hesc_v3_allowed_solar_dip
+          name: Allowed solar dip
+        - entity: number.hesc_v3_charger_stopped_before_restore
+          name: Charger stopped before restore
+        - entity: number.hesc_v3_maximum_release_duration
+          name: Maximum release duration
+        - entity: number.hesc_v3_cooldown_after_release
+          name: Cooldown after release
+        - entity: number.hesc_v3_failed_releases_per_day_max
+          name: Failed releases per day (max)
+    - type: tile
+      entity: switch.hesc_v3_show_advice
+      name: Advice
+      icon: mdi:lightbulb-on-outline
+      hide_state: true
+      vertical: false
+      features_position: inline
+      features:
+      - type: toggle
+      grid_options:
+        columns: 12
+    - type: conditional
+      conditions:
+      - entity: switch.hesc_v3_show_advice
+        state: 'on'
+      card:
+        type: entities
+        entities:
+        - entity: number.hesc_v3_advice_based_on_last
+          name: Advice based on last
+        - entity: number.hesc_v3_advice_minimum_sessions
+          name: Minimum sessions before advice
+        - entity: sensor.hesc_v3_advice_updated
+          name: Advice updated
+    - type: tile
+      entity: switch.hesc_v3_show_charge_plan_settings
+      name: Plan and notifications
+      icon: mdi:calendar-clock
+      hide_state: true
+      vertical: false
+      features_position: inline
+      features:
+      - type: toggle
+      grid_options:
+        columns: 12
+    - type: conditional
+      conditions:
+      - condition: or
+        conditions:
+        - entity: switch.hesc_v3_show_charge_plan_settings
+          state: 'on'
+        - entity: binary_sensor.hesc_v3_check_charge_plan
+          state: 'off'
+      card:
+        type: entities
+        entities:
+        - type: attribute
+          entity: sensor.hesc_v3_setup
+          attribute: hesc_charger_start_stop_entity
+          name: Charger start/stop switch (on = charge)
+        - type: attribute
+          entity: sensor.hesc_v3_setup
+          attribute: hesc_charger_resume_entity
+          name: 'Back to solar mode (Wallbox: resume schedule)'
+        - entity: text.hesc_v3_charger_charge_now_mode_value
+          name: …or mode value that means 'charge now'
+        - entity: select.hesc_v3_price_source
+          name: Price source
+        - entity: text.hesc_v3_day_ahead_price_sensor
+          name: Price sensor (with a price list, or any sensor of EnergyZero / EasyEnergy / Tibber / Nord Pool official)
+        - entity: select.hesc_v3_price_resolution
+          name: Prices per (Automatic follows the source; Per hour = your supplier bills per hour)
+        - entity: select.hesc_v3_currency
+          name: Currency (Automatic follows the price sensor)
+        - type: attribute
+          entity: sensor.hesc_v3_setup
+          attribute: hesc_solar_today_sensor
+          name: Solar forecast today (per half hour, e.g. Solcast forecast today)
+        - type: attribute
+          entity: sensor.hesc_v3_setup
+          attribute: hesc_solar_tomorrow_sensor
+          name: Solar forecast tomorrow (e.g. Solcast forecast tomorrow)
+        - entity: number.hesc_v3_charge_plan_final_check_before_ready_by_time
+          name: Final check before ready-by time (0 = off)
+        - type: section
+          label: Notifications to your phone
+        - type: simple-entity
+          entity: sensor.hesc_v3_notification_phones
+          name: Notifications go to
+          icon: mdi:cellphone-message
+        - entity: select.hesc_v3_notifications_add_or_remove_a_phone
+          name: Add or remove a phone (✓ = gets notifications)
+        - entity: button.hesc_v3_send_a_test_notification
+          name: Send a test notification
+        - entity: switch.hesc_v3_morning_summary
+          name: Morning summary every day (level, plan, sun, yesterday)
+        - entity: select.hesc_v3_morning_summary_time
+          name: Morning summary at
+        - entity: text.hesc_v3_notify_services
+          name: Notify services (filled by the list above; edit by hand if needed)
+        - type: button
+          name: Change sources and charger
+          icon: mdi:cog
+          action_name: Setup screen
+          tap_action:
+            action: navigate
+            navigation_path: /config/integrations/integration/hesc
+    - type: conditional
+      conditions:
+      - condition: or
+        conditions:
+        - entity: switch.hesc_v3_show_charge_plan_settings
+          state: 'on'
+        - entity: binary_sensor.hesc_v3_check_charge_plan
+          state: 'off'
+      card:
+        type: markdown
+        content: <small>Fill in <b>one</b> of the first two. A start/stop switch is switched on in a planned quarter; otherwise the charger's mode is set to the 'charge now' value. Afterwards, or when the charger stops by itself, it always goes back to how it was before charging started. HESC never takes over a charge it did not start.</small>
+    - type: custom:hesc-style
+      style:
+        ha-markdown$: 'h2 ha-icon { --mdc-icon-size: 24px; margin-right: 4px; }
+
+          h2 a ha-icon { --mdc-icon-size: 20px; margin-right: 0; vertical-align: 1px; }
+
+          h2 ha-icon[icon="hesc:accu-liggend"] { vertical-align: -0.6px; }'
+      grid_options:
+        columns: 12
+      card:
+        type: markdown
+        content: '## <ha-icon icon="hesc:accu-liggend"></ha-icon> Minimum charge
+
+          Optional. Keeps at least this battery level in the EV.'
+    - type: horizontal-stack
+      cards:
+      - type: tile
+        entity: switch.hesc_v3_minimum_charge
+        name: Use
+        icon: mdi:battery-lock
+        hide_state: true
+        vertical: false
+        features_position: inline
+        features:
+        - type: toggle
+      - type: tile
+        entity: switch.hesc_v3_show_minimum_charge_settings
+        name: Settings
+        icon: mdi:tune-vertical
+        hide_state: true
+        vertical: false
+        features_position: inline
+        features:
+        - type: toggle
+      grid_options:
+        columns: 12
+    - type: conditional
+      conditions:
+      - entity: switch.hesc_v3_show_minimum_charge_settings
+        state: 'on'
+      card:
+        type: entities
+        entities:
+        - entity: number.hesc_v3_minimum_charge_level
+          name: Minimum battery level
+        - entity: number.hesc_v3_minimum_charge_within
+          name: Reach it within (hours)
+      grid_options:
+        columns: 12
+    - type: custom:hesc-style
+      style:
+        ha-markdown$: 'h2 ha-icon { --mdc-icon-size: 24px; margin-right: 4px; }
+
+          h2 a ha-icon { --mdc-icon-size: 20px; margin-right: 0; vertical-align: 1px; }
+
+          h2 ha-icon[icon="hesc:thuisbatterij"] { vertical-align: 3.5px; }'
+      grid_options:
+        columns: 12
+      card:
+        type: markdown
+        content: '## <ha-icon icon="hesc:thuisbatterij"></ha-icon> Home battery and EV
+
+          With enough sun left today for the home battery, HESC gives the charger a short kick so the EV takes the solar surplus first.'
+    - type: horizontal-stack
+      cards:
+      - type: tile
+        entity: switch.hesc_v3_home_battery_and_ev_kickstart
+        name: Use
+        icon: mdi:battery-arrow-up-outline
+        hide_state: true
+        vertical: false
+        features_position: inline
+        features:
+        - type: toggle
+      - type: tile
+        entity: switch.hesc_v3_show_kickstart_settings
+        name: Settings
+        icon: mdi:tune-vertical
+        hide_state: true
+        vertical: false
+        features_position: inline
+        features:
+        - type: toggle
+      grid_options:
+        columns: 12
+    - type: conditional
+      conditions:
+      - condition: or
+        conditions:
+        - entity: switch.hesc_v3_show_kickstart_settings
+          state: 'on'
+        - condition: and
+          conditions:
+          - entity: switch.hesc_v3_home_battery_and_ev_kickstart
+            state: 'on'
+          - entity: binary_sensor.hesc_v3_check_home_battery_and_ev
+            state: 'off'
+      card:
+        type: entities
+        entities:
+        - entity: text.hesc_v3_home_battery_level_sensors
+          name: Home battery level sensor(s)
+        - entity: text.hesc_v3_home_battery_power_sensors
+          name: Home battery power sensor(s), + = charging
+        - entity: number.hesc_v3_home_battery_size_all_together
+          name: Home battery size (all together)
+        - entity: number.hesc_v3_kickstarts_per_day_max
+          name: Kickstarts per day (max)
+        - entity: number.hesc_v3_kickstart_minimum_sun_left_for_the_ev
+          name: Minimum sun left for the EV
+  badges: []
+- title: Guide
+  path: guide
+  icon: hesc:boek
+  subview: true
+  back_path: /hesc-v3/home-ev-solar-control
+  type: sections
+  max_columns: 2
+  sections:
+  - type: grid
+    cards:
+    - type: markdown
+      content: '### <ha-icon icon="hesc:boek" style="--mdc-icon-size:22px;vertical-align:-5px;margin-right:4px"></ha-icon>Smart charging explained
+
+
+        *A guide for everyone: what HESC does with your car, why, and what you still do yourself.*
+
+
+        [Nederlandse versie](/hesc-v3/guide-nl) · [Deutsche Version](/hesc-v3/guide-de)'
+      grid_options:
+        columns: full
+    - type: markdown
+      content: '### The short version
+
+
+        After about two weeks HESC runs almost on its own. Your part is small:
+
+
+        1. **Plug the car in** when you get home.
+
+        2. **Make sure your plan matches when you leave.** A weekly plan for your usual days (for example *80% on weekdays at 07:30*), and the *one fixed day per week* plan for one extra day (*100% on Saturdays at 09:00*).
+
+
+        HESC does the rest. Between the moment you plug in and the moment you leave, it looks for the cheapest way to get the car where you want it. First it uses free sunshine, then the cheapest hours from the grid, and it always keeps a safety net so that the car is ready on time.'
+      grid_options:
+        columns: full
+    - type: markdown
+      content: '### Why the first two weeks matter
+
+
+        Most things work from the first day: solar charging, the charge plan, the safety net and the goal check.
+
+
+        One thing gets better with time: **looking ahead at prices.** Electricity prices for tomorrow are published around 13:00. Before that, nobody knows them. HESC fills that gap with an expected price, based on what prices did in your own last 14 days, and on how sunny tomorrow is going to be (sunny days are usually cheap around midday and expensive in the evening).
+
+
+        - **The first day:** no expected prices yet. HESC plans only with the prices that are known. That is fine; the safety net still gets the car ready.
+
+        - **After one full day:** a rough expectation, simply yesterday''s pattern. Expected prices appear as grey bars in the price chart and the plan can use them.
+
+        - **From day 3:** the expectation uses the average of all full days so far.
+
+        - **From day 14:** it rests on two full weeks of your own prices.
+
+        - **Every week after that:** HESC refines how sun and price relate on your market, using your own history.
+
+
+        Expected prices are a guess, and HESC treats them that way: a known price always wins over an expected one, unless the expected one is clearly cheaper (2 cents per kWh or more). As soon as the real prices arrive, the plan uses those.'
+      grid_options:
+        columns: full
+    - type: markdown
+      content: '### The order HESC follows
+
+
+        Every 30 seconds HESC looks at the car, the sun, the prices and your plan, and asks itself the same questions in the same order:
+
+
+        | # | Question | What happens |
+
+        |---|---|---|
+
+        | 1 | **Is there sun?** | Your charger charges on solar in its own solar/Eco mode, as it always did (with HPVC, HESC first asks HPVC to let the sun through). HESC follows it and counts the sun in the plan, so it does not buy energy the sun will deliver anyway. |
+
+        | 2 | **Is it one of the planned cheapest quarters?** | HESC starts the charger from the grid for that quarter of an hour. |
+
+        | 3 | **Is time running out?** | **Safety net:** when the time left is only just enough to reach the goal, HESC starts charging, whatever the price. |
+
+        | 4 | **Is it the last hour before you leave and the car is still short?** | **Final check:** HESC charges to your goal, whatever the price. |
+
+        | 5 | **Is the price very low right now?** | **Cheap chance:** HESC charges now, even without a plan, *unless* enough sun is expected later today to do the same job (see below). |
+
+        | 6 | **Is the car below the minimum you set?** | **Minimum charge** (optional, off by default): the car gets at least that level within a few hours, in the cheapest quarters of that window. |
+
+        | 7 | Nothing of the above | HESC waits. The dashboard tells you why, for example *Waiting for the next planned quarter*. |
+
+
+        A few rules apply to all of these:
+
+
+        - **3% margin.** HESC only starts charging from the grid when the car is more than 3% below the goal. A car at 78% with a goal of 80% is left alone; at 76.9% it charges. This avoids starting the charger for a few minutes of nothing.
+
+        - **Which goal?** With an active plan: the goal of that plan. Without one (cheap chances, topping up): *EV counts as full at* (default 80%). A cheap chance never fills a car that already counts as full.
+
+        - **HESC only undoes what it started.** If you start charging yourself, or the car is already charging on sun, HESC leaves it alone.
+
+        - **After grid charging the charger is not left on** (chargers with a start/stop switch). Otherwise the car could quietly top itself up from the grid in the evening peak. If *Back to solar mode* is filled in (Wallbox: *Resume schedule*; HESC fills it in itself), HESC pauses the charger, checks that the pause really took effect (chargers that work through the cloud react about a minute late) and then puts it back in its own solar mode, so the next sunny hour charges the car by itself. Without that field the charger stays paused, and HESC switches it on again when there is enough sun, when the car drops more than 3% below the goal and no planned charge is coming, when a plan starts, or when you unplug.'
+      grid_options:
+        columns: full
+    - type: markdown
+      content: '### How the plan picks the cheapest hours
+
+
+        Say you plug in at 18:00 with the car at 40%, and your weekly plan says *80% at 07:30*.
+
+
+        1. **How much is needed?** 40% of a 60 kWh battery = 24 kWh.
+
+        2. **How much comes from the sun before 07:30?** None, it is night. (On a Saturday plan for 14:00 the morning sun would count.)
+
+        3. **How long does that take from the grid?** At 11 kW: a bit over 2 hours, so 9 quarters.
+
+        4. **Which 9 quarters?** The cheapest ones between now and 07:30. Usually somewhere in the night.
+
+
+        The planned quarters show up in **amber** in the price chart on the *Charge plan* tab. When the plan is not active, the chart shows what it *would* do, marked *preview*.'
+      grid_options:
+        columns: full
+    - type: markdown
+      content: '### Cheap chances and the sun
+
+
+        *Take cheap chances* (on the *Charge plan* tab) charges whenever the price drops below *Cheap when below*, even without a plan. These moments show in **blue-green** in the price chart.
+
+
+        But a cheap moment in the morning is not a bargain when the afternoon sun would have filled the car for free. So before taking a cheap chance, HESC looks at the solar forecast for the rest of that day. If the sun is expected to cover what the car still needs, with 20% to spare, the cheap chance is skipped. You then see *Cheap chance skipped: enough sun today*, and the price chart leaves those quarters out.
+
+
+        **Grid charging and the sun at the same time.** If your charger lets HESC set its charging current (for a Wallbox: the *Maximum charging current* setting, which needs an admin account), HESC turns the charger down while it charges from the grid and the sun is shining. More of the charge then comes from your solar panels and less from the grid. This is normal behaviour, there is nothing to switch on: HESC only does it while the car will still be full on time, and afterwards it puts the current back to what it was. HESC works out by itself whether your charger uses 1 or 3 phases.
+
+
+        **Phase advice.** Some chargers only start when every phase has enough sun to spare (a Wallbox on Eco about 480 W per phase, an Easee 6 A per phase). If your solar panels are spread unevenly over the phases, the weakest phase then decides when your car can charge on the sun. When you choose the grid power per phase under the sources, HESC measures this on days with sun and tells you what it saw: first the spread over the phases, later how often the weakest phase kept your charger from starting. The sunniest period is worked out for your location, so HESC only says *confirmed* after it has seen it. It is advice only, HESC changes nothing.'
+      grid_options:
+        columns: full
+    - type: markdown
+      content: '### Home battery and EV
+
+
+        *Optional, off by default. Only for homes with a home battery.*
+
+
+        On a sunny morning the home battery usually takes all the spare sun first. The charger in solar mode then sees no surplus and waits, sometimes until the home battery is full in the afternoon. On a day with less sun, that can mean the car gets nothing.
+
+
+        With **Home battery and EV** switched on, HESC helps the car get its turn:
+
+
+        1. **Kickstart.** When the car is plugged in and waiting for sun, the home battery has been charging for a few minutes and the cautious forecast says there is enough sun now, HESC checks the rest of the day. Is there clearly more sun left than the home battery still needs (with 20% to spare, and at least *Minimum sun left for the EV*)? Then HESC gives the charger a short start. Your battery system sees the car charging and stops filling the home battery; HESC then puts the charger back in its own solar mode, which keeps charging on the sun that is now free.
+
+        2. **Back to the home battery.** Later in the day, when the sun left is only just enough to fill the home battery, HESC puts the charger back to waiting, so the home battery is full by the evening. After that there is no new kickstart that day.
+
+
+        During the short start the home battery may deliver some power to the car for a moment. That is expected and small.
+
+
+        HESC never controls the home battery itself. It only decides when the car starts, and reads the home battery level and power. It does nothing while a charge plan is charging, during an HPVC release, or after sunset, and at most a few times a day (*Kickstarts per day*, default 3, with at least 30 minutes in between).
+
+
+        What you fill in (Settings, block 3, *Home battery and EV* → *Settings*): the level sensor(s) of your home battery, its power sensor(s) (positive = charging) and its total size in kWh. It also needs the charger''s start/stop switch and *Back to solar mode* (block 3, *Plan and notifications*); with charger type Wallbox both are filled in for you. When the car is plugged in, Main shows what it is doing in an extra line under *Current state*.'
+      grid_options:
+        columns: full
+    - type: markdown
+      content: '### What will it cost?
+
+
+        The **Expected charge cost** badge at the top of Main shows what the active plan is expected to cost from the grid, with the same rule as the Costs page (the price of each planned quarter, plus your mark-up and VAT, or the all-in price). It only counts grid charging that will really happen: without an active plan, with the car already at its goal, or when the car is already charging on sun, it shows 0.00.
+
+
+        **What did it cost?** Tap the **Costs** badge on Main. Per day, week, month, quarter or year you see how much went into the car, how much of that came from the sun (green) and from the grid (grey), and what the grid part cost at the price of that quarter. You set your mark-up, VAT and the value of a solar kWh once under *Settings → Charging costs*; the whole history follows. **Export to spreadsheet (CSV)** at the bottom writes two files you can open in Excel.
+
+
+        All amounts are in the currency of your prices (€, kr, £ or $), written the way your country does it.'
+      grid_options:
+        columns: full
+    - type: markdown
+      content: '### On your phone and watch
+
+
+        HESC works with the Home Assistant app on your iPhone (or Android phone), also away from home.
+
+
+        - **Widget or Apple Watch:** in the Home Assistant app, add the sensor *Summary for phone and watch* as a widget or as a watch complication. It shows for example *EV 72% → 80% by Sat 24-10 07:00 · Charging on sun*.
+
+        - **Siri or Shortcuts:** make a shortcut with the Home Assistant action *Perform action* → **HESC: Set charge plan** (day, time, goal) or **HESC: Charge plan off**. Then say for example *Hey Siri, charge the car for tomorrow*. Also there: **HESC: Charge now** (to a goal, from the grid, at once), **HESC: Skip a day of the repeating plan** (a day off; the plan itself stays) and the two that undo them.
+
+        - **Lock screen:** the *Details* or *Gauge* widget of the Home Assistant app follows the summary at once: HESC asks the iPhones in its phone list to refresh it when something changes (at most every 20 minutes). The home-screen widgets refresh about every 15 minutes, iOS decides that.
+
+        - **Android and Wear OS:** the *Entity state* widget with the summary, and an *Action button* widget, quick-settings tile or watch tile that presses a HESC button (charge now, stop, skip a day, plan off) or runs your own script. Android widgets refresh by themselves (at once with *Real-time* on in the app''s notification access).
+
+        - **Notifications:** choose your phone on the Settings page (*Notifications: add or remove a phone*).'
+      grid_options:
+        columns: full
+  - type: grid
+    cards:
+    - type: markdown
+      content: '### Situations
+
+
+        #### "I drive to work every weekday"
+
+
+        Make a **weekly plan**: tick the days, set the time you leave and the level you want. Leave it active. Plug in when you get home. That is all.
+
+
+        #### "I''m going on a trip on Saturday"
+
+
+        Use the plan **one fixed day per week**: pick *Saturday*, the time you leave and for example 100%, and switch it on. When it and the weekly plan are both active, the earliest one wins; your weekly plan simply continues.
+
+
+        This plan comes back every week on the same day and time. Only need it once? Switch *Active* off after the trip.
+
+
+        #### "The car stays at home for a few days"
+
+
+        No plan is needed. The car charges on sun, takes cheap chances when they come, and the charger stays paused otherwise. Only when the car drops more than 3% below *EV counts as full at* does HESC top it up.
+
+
+        #### "I came home with an almost empty battery and might need the car tonight"
+
+
+        Switch on **Minimum charge** (Settings, block 3, *Use*). Default: at least 20% within 3 hours. HESC picks the cheapest quarters in those 3 hours, and charges straight away if no prices are known. Both numbers can be changed under *Settings*.
+
+
+        #### "I have a home battery and the car never gets any sun"
+
+
+        Switch on **Home battery and EV** (Settings, block 3, *Use*) and fill in your home battery under *Settings*. See *Home battery and EV* above.
+
+
+        #### "I need the car now, forget the plan"
+
+
+        Start charging yourself (app, charger button or the charger''s own mode). HESC sees the car is already charging and leaves it alone.
+
+
+        #### "I plugged in late; is there still time?"
+
+
+        HESC checks this all the time. If the time left is only just enough, the safety net starts charging straight away. If the goal is still missed, you get a notification on your phone at the time you wanted to leave: *EV goal missed*, with the level it reached.
+
+
+        #### "Tomorrow is going to be sunny"
+
+
+        The plan counts the sun in advance (cautious forecast, minus a little for the house), so it buys less from the grid. Cheap chances that the sun would make unnecessary are skipped.
+
+
+        #### "Tomorrow''s prices aren''t known yet"
+
+
+        Normal before about 13:00. After the first few days the plan uses expected prices (grey bars) and firms up as soon as the real prices arrive.
+
+
+        #### "My car stops at 80% by itself"
+
+
+        Many cars have their own charge limit. If it is lower than your goal, the charger stops by itself and HESC shows *Finished, charger stopped by itself*. Set your goal at or below the car''s own limit, or raise the limit in the car.
+
+
+        #### "The charger did not respond"
+
+
+        Chargers that work through the cloud sometimes ignore a command. HESC checks and tries again: a refused start or resume after 5 minutes, a refused pause after 30 minutes, each at most 3 times. Before putting the charger back in its solar mode, HESC waits until the pause has really taken effect.
+
+
+        #### "Home Assistant restarted during charging"
+
+
+        HESC keeps using the last valid plan for up to 10 minutes, so a running charge does not stop.
+
+
+        #### "I just restarted Home Assistant and some values are empty, or the setup check shows a red <ha-icon icon="hesc:kruis-cirkel" style="--mdc-icon-size:16px;vertical-align:-3px;margin-right:4px"></ha-icon>"
+
+
+        That is normal and fixes itself; nothing for you to do. Prices, settings and the setup check are back at once; EV battery level, costs and the notice line within about 5 minutes; the price forecast (expected prices in the chart) within 15 minutes; the start threshold advice within a few minutes. A red <ha-icon icon="hesc:kruis-cirkel" style="--mdc-icon-size:16px;vertical-align:-3px;margin-right:4px"></ha-icon> can show for a moment while your charger, inverter or car integration is still starting. Still red after 15 minutes? Then something really is missing, and the right settings open by themselves. Right after a restart the car integration can also briefly report an old battery level; HESC follows the correction at its next round.
+
+
+        #### "I''m on holiday"
+
+
+        Switch on **Holiday mode** under the weekly plan. The weekly plan then does nothing; your one-day plan stays active, so you can still have a full car on the day you come back. Solar charging carries on as usual. Set **Holiday until** if you like: the day after that date, holiday mode switches itself off.'
+      grid_options:
+        columns: full
+    - type: markdown
+      content: '### What you set once
+
+
+        | Setting | Where | Default | Tip |
+
+        |---|---|---|---|
+
+        | Usable battery capacity | *Charge plan* tab | 60 kWh | What your car can really use |
+
+        | Grid charging power | *Charge plan* tab | 11 kW | A little below what your charger really delivers gives some margin |
+
+        | Take cheap chances / Cheap when below | *Charge plan* tab | your choice / 0.05 per kWh | In the currency of your prices. Lower = fewer but better chances |
+
+        | EV counts as full at | *Charge plan* tab and Settings | 80% | The level to keep without a plan |
+
+        | Final check | Settings | 60 min | How long before you leave HESC charges whatever the price |
+
+        | Minimum charge | Settings, block 3 | off (20%, 3 h) | Use + Settings switches |
+
+        | Home battery and EV | Settings, block 3 | off (3 per day) | Only with a home battery; Use + Settings switches |
+
+        | Back to solar mode | Settings, block 3, *Plan and notifications* | filled in for Wallbox | Puts the charger back in its own solar mode after grid charging |
+
+        | Phones for notifications | Settings, block 3, *Plan and notifications* | none | Pick them from the list; test with *Send a test notification* |
+
+        | Morning summary | Settings, block 3, *Plan and notifications* | off (06:00) | One message a day: battery level, next plan, sun today, yesterday |
+
+        | Charging costs | Settings, *Charging costs* | mark-up 0, VAT 0, solar kWh free | Or switch on *all-in* when your price sensor already has the full price |'
+      grid_options:
+        columns: full
+    - type: markdown
+      content: '### Where to look
+
+
+        - **Status** on the dashboard: one line saying what HESC does now and why.
+
+        - **Price chart** (*Charge plan* tab): amber = planned, blue-green = cheap chance, grey = expected price.
+
+        - **Notice line** (top of Main): *✓ No notices*, or what needs attention. Red = the charge goal is at risk (also on your phone), orange = a sensor is missing but HESC keeps working, grey = just so you know. Tap it to go where you can act.
+
+        - **Expected charge cost** (badge at the top of Main): what the active plan is expected to cost.
+
+        - **Costs** (badge at the top of Main): what went into the car, from the sun and from the grid, and what it cost.
+
+        - **Setup check** (*Settings* tab): one line per part with a tick and the values of now. When something is wrong, that part opens by itself and says what is missing.
+
+        - **Report**: everything HESC measured and decided, for yourself or when you ask for help.
+
+
+        See also: [How it works](https://github.com/satscan1/hesc-home-ev-solar-control/blob/main/docs/04-how-it-works.md) for the details, and [A day with HESC](https://github.com/satscan1/hesc-home-ev-solar-control/blob/main/docs/08-a-day-with-hesc.md) for an example day.'
+      grid_options:
+        columns: full
+- title: Uitleg
+  path: guide-nl
+  icon: hesc:boek
+  subview: true
+  back_path: /hesc-v3/home-ev-solar-control
+  type: sections
+  max_columns: 2
+  sections:
+  - type: grid
+    cards:
+    - type: markdown
+      content: '### <ha-icon icon="hesc:boek" style="--mdc-icon-size:22px;vertical-align:-5px;margin-right:4px"></ha-icon>Slim laden uitgelegd
+
+
+        *Een uitleg voor iedereen: wat HESC met je auto doet, waarom, en wat je zelf nog doet.*
+
+
+
+        [English version](/hesc-v3/guide) · [Deutsche Version](/hesc-v3/guide-de)'
+      grid_options:
+        columns: full
+    - type: markdown
+      content: '### In het kort
+
+
+        Na ongeveer twee weken werkt HESC bijna helemaal vanzelf. Jouw deel is klein:
+
+
+        1. **Stekker erin** als je thuiskomt.
+
+        2. **Zorg dat je planning klopt met je vertrektijd.** Een weekplan voor je vaste dagen (bijvoorbeeld *80% op werkdagen om 07:30*), en het plan *één vaste dag per week* voor één extra dag (*100% op zaterdag om 09:00*).
+
+
+        De rest doet HESC. Tussen het moment dat je aansluit en het moment dat je vertrekt, zoekt het de goedkoopste manier om de auto op het gewenste niveau te krijgen. Eerst met gratis zonnestroom, dan met de goedkoopste uren van het net, en altijd met een vangnet zodat de auto op tijd klaar is.'
+      grid_options:
+        columns: full
+    - type: markdown
+      content: '### Waarom de eerste twee weken ertoe doen
+
+
+        Het meeste werkt vanaf de eerste dag: laden op zon, het laadplan, het vangnet en de controle van je doel.
+
+
+        Eén ding wordt beter met de tijd: **vooruitkijken naar prijzen.** De stroomprijzen voor morgen komen rond 13:00 uit. Daarvoor weet niemand ze. HESC vult dat gat met een verwachte prijs, op basis van wat de prijzen de afgelopen 14 dagen bij jou deden, en van hoe zonnig het morgen wordt (zonnige dagen zijn meestal goedkoop rond het middaguur en duur in de avond).
+
+
+        - **De eerste dag:** nog geen verwachte prijzen. HESC plant alleen met de prijzen die bekend zijn. Geen probleem: het vangnet zorgt dat de auto toch klaar is.
+
+        - **Na één volle dag:** een ruwe verwachting, gewoon het patroon van gisteren. Verwachte prijzen verschijnen als grijze staven in de prijsgrafiek en het plan mag ze gebruiken.
+
+        - **Vanaf dag 3:** de verwachting gebruikt het gemiddelde van alle volle dagen tot nu toe.
+
+        - **Vanaf dag 14:** de verwachting rust op twee volle weken van je eigen prijzen.
+
+        - **Daarna elke week:** HESC stelt met je eigen geschiedenis bij hoe zon en prijs op jouw markt samenhangen.
+
+
+        Een verwachte prijs blijft een schatting, en HESC gaat er ook zo mee om: een bekende prijs gaat altijd voor op een verwachte, tenzij de verwachte duidelijk goedkoper is (2 cent per kWh of meer). Zodra de echte prijzen er zijn, gebruikt het plan die.'
+      grid_options:
+        columns: full
+    - type: markdown
+      content: '### De volgorde die HESC aanhoudt
+
+
+        Elke 30 seconden kijkt HESC naar de auto, de zon, de prijzen en je plan, en stelt zichzelf steeds dezelfde vragen in dezelfde volgorde:
+
+
+        | # | Vraag | Wat er gebeurt |
+
+        |---|---|---|
+
+        | 1 | **Is er zon?** | Je laadpaal laadt op zon in zijn eigen zon-/Eco-stand, zoals altijd (met HPVC vraagt HESC eerst aan HPVC om de zon door te laten). HESC volgt dat en rekent de zon mee in het plan, zodat het geen stroom koopt die de zon toch levert. |
+
+        | 2 | **Is het een van de geplande goedkoopste kwartieren?** | HESC zet de laadpaal dat kwartier aan op netstroom. |
+
+        | 3 | **Raakt de tijd op?** | **Vangnet:** is de resterende tijd nog maar net genoeg om het doel te halen, dan start HESC het laden, wat de prijs ook is. |
+
+        | 4 | **Is het het laatste uur voor vertrek en zit de auto nog onder het doel?** | **Eindcontrole:** HESC laadt tot je doel, wat de prijs ook is. |
+
+        | 5 | **Is de prijs nu erg laag?** | **Goedkope kans:** HESC laadt nu, ook zonder plan, *tenzij* er later vandaag genoeg zon verwacht wordt om hetzelfde te doen (zie verderop). |
+
+        | 6 | **Zit de auto onder het minimum dat je hebt ingesteld?** | **Minimumlading** (optioneel, standaard uit): de auto krijgt binnen een paar uur minstens dat niveau, in de goedkoopste kwartieren van dat venster. |
+
+        | 7 | Niets van dit alles | HESC wacht. Het dashboard zegt waarom, bijvoorbeeld *Waiting for the next planned quarter*. |
+
+
+        Voor alles hierboven gelden een paar regels:
+
+
+        - **3% marge.** HESC laadt pas van het net als de auto meer dan 3% onder het doel zit. Een auto op 78% met een doel van 80% blijft met rust; op 76,9% wordt er geladen. Zo start de laadpaal niet voor een paar minuten niets.
+
+        - **Welk doel?** Met een actief plan: het doel van dat plan. Zonder plan (goedkope kansen, bijladen): *Auto telt als vol bij* (standaard 80%). Een goedkope kans vult dus nooit een auto die al als vol telt.
+
+        - **HESC maakt alleen ongedaan wat het zelf startte.** Start je zelf met laden, of laadt de auto al op zon, dan laat HESC het met rust.
+
+        - **Na het laden van het net blijft de laadpaal niet aan staan** (laadpalen met een start/stop-schakelaar). Anders kan de auto stilletjes in de dure avondpiek bijladen van het net. Is *Terug naar zonnestand* ingevuld (Wallbox: *Resume schedule*; HESC vult dat zelf in), dan zet HESC de laadpaal op pauze, controleert dat de pauze echt is doorgekomen (laadpalen via de cloud reageren ongeveer een minuut later) en zet hem daarna terug in zijn eigen zonnestand, zodat het volgende zonnige uur de auto vanzelf laadt. Zonder dat veld blijft de laadpaal op pauze, en zet HESC hem weer aan als er genoeg zon is, als de auto meer dan 3% onder het doel zakt en er geen geplande lading meer komt, als een plan start, of als je de stekker eruit haalt.'
+      grid_options:
+        columns: full
+    - type: markdown
+      content: '### Hoe het plan de goedkoopste uren kiest
+
+
+        Stel: je sluit om 18:00 aan met de auto op 40%, en je weekplan zegt *80% om 07:30*.
+
+
+        1. **Hoeveel is er nodig?** 40% van een accu van 60 kWh = 24 kWh.
+
+        2. **Hoeveel komt er van de zon vóór 07:30?** Niets, het is nacht. (Bij een plan voor zaterdag 14:00 zou de ochtendzon wel meetellen.)
+
+        3. **Hoe lang duurt dat van het net?** Bij 11 kW: iets meer dan 2 uur, dus 9 kwartieren.
+
+        4. **Welke 9 kwartieren?** De goedkoopste tussen nu en 07:30. Meestal ergens in de nacht.
+
+
+        De geplande kwartieren zie je **oranje** in de prijsgrafiek op het tabblad *Laadplan*. Staat het plan niet aan, dan laat de grafiek zien wat het *zou* doen, met het woord *voorbeeld*.'
+      grid_options:
+        columns: full
+    - type: markdown
+      content: '### Goedkope kansen en de zon
+
+
+        *Goedkope kansen pakken* (op het tabblad *Laadplan*) laadt zodra de prijs onder *Goedkoop onder* zakt, ook zonder plan. Die momenten zie je **blauwgroen** in de prijsgrafiek.
+
+
+        Maar een goedkoop moment in de ochtend is geen koopje als de middagzon de auto gratis had kunnen vullen. Daarom kijkt HESC eerst naar de zonverwachting voor de rest van die dag. Dekt de zon naar verwachting wat de auto nog nodig heeft, met 20% over, dan wordt de goedkope kans overgeslagen. Je ziet dan *Cheap chance skipped: enough sun today*, en de prijsgrafiek laat die kwartieren weg.
+
+
+        **Netladen en zon tegelijk.** Laat je laadpaal HESC de laadstroom instellen (bij een Wallbox: de instelling *Maximum charging current*, daarvoor is een beheerdersaccount nodig), dan zet HESC de laadpaal zachter zolang hij uit het net laadt en de zon schijnt. Er komt dan meer uit je zonnepanelen en minder uit het net. Dit is normaal gedrag, je hoeft niets aan te zetten: HESC doet het alleen zolang de auto op tijd vol is, en zet de stroom daarna terug zoals hij was. Of je laadpaal op 1 of 3 fasen laadt, ziet HESC zelf.
+
+
+        **Fase-advies.** Sommige laadpalen starten pas als er op elke fase genoeg zon over is (een Wallbox op Eco ongeveer 480 W per fase, een Easee 6 A per fase). Liggen je zonnepanelen ongelijk over de fasen, dan bepaalt de zwakste fase wanneer je auto op zon kan laden. Kies je bij de bronnen het netvermogen per fase, dan meet HESC dit op dagen met zon en vertelt wat het zag: eerst de verdeling over de fasen, later hoe vaak de zwakste fase je laadpaal tegenhield. De zonnigste periode rekent HESC uit voor jouw locatie, dus pas als die gezien is staat er *confirmed*. Het is alleen advies, HESC verandert niets.'
+      grid_options:
+        columns: full
+    - type: markdown
+      content: '### Thuisbatterij en auto
+
+
+        *Optioneel, standaard uit. Alleen voor huizen met een thuisbatterij.*
+
+
+        Op een zonnige ochtend pakt de thuisbatterij meestal eerst alle zon die over is. De laadpaal in zonnestand ziet dan geen overschot en wacht, soms tot de thuisbatterij ''s middags vol is. Op een dag met minder zon kan dat betekenen dat de auto niets krijgt.
+
+
+        Met **Thuisbatterij en auto** aan helpt HESC de auto aan de beurt te komen:
+
+
+        1. **Aftrap.** Hangt de auto aan de laadpaal en wacht hij op zon, laadt de thuisbatterij al een paar minuten en zegt de voorzichtige verwachting dat er nu genoeg zon is, dan kijkt HESC naar de rest van de dag. Is er duidelijk meer zon over dan de thuisbatterij nog nodig heeft (met 20% over, en minstens *Minimale zon over voor de auto*)? Dan geeft HESC de laadpaal een korte start. Je batterijsysteem ziet de auto laden en stopt met het vullen van de thuisbatterij; daarna zet HESC de laadpaal terug in zijn eigen zonnestand, die blijft laden op de zon die nu vrijkomt.
+
+        2. **Terug naar de thuisbatterij.** Later op de dag, als de resterende zon nog maar net genoeg is om de thuisbatterij te vullen, zet HESC de laadpaal weer op wachten, zodat de thuisbatterij ''s avonds vol is. Daarna volgt die dag geen nieuwe aftrap.
+
+
+        Tijdens de korte start kan de thuisbatterij heel even wat stroom aan de auto leveren. Dat is normaal en weinig.
+
+
+        HESC stuurt de thuisbatterij nooit zelf. Het bepaalt alleen wanneer de auto start, en leest het niveau en het vermogen van de thuisbatterij. Het doet niets terwijl een laadplan laadt, tijdens een vrijgave van HPVC of na zonsondergang, en hoogstens een paar keer per dag (*Kickstarts per dag*, standaard 3, met minstens 30 minuten ertussen).
+
+
+        Wat je invult (Instellingen, blok 3, *Thuisbatterij en auto* → *Opties*): de niveausensor(en) van je thuisbatterij, de vermogenssensor(en) (positief = laden) en de totale grootte in kWh. Het heeft ook de start/stop-schakelaar van de laadpaal nodig en *Terug naar zonnestand* (blok 3, *Laadplan en meldingen*); bij laadpaaltype Wallbox worden die twee voor je ingevuld. Hangt de auto aan de laadpaal, dan laat Overzicht in een extra regel onder *Huidige stand* zien wat het doet.'
+      grid_options:
+        columns: full
+    - type: markdown
+      content: '### Wat gaat het kosten?
+
+
+        Het kadertje **Verwachte laadkosten** bovenaan Overzicht toont wat het actieve plan naar verwachting van het net kost, met dezelfde rekenregel als de kostenpagina (de prijs van elk gepland kwartier, plus je opslag en btw, of de all-in prijs). Het telt alleen netladen dat echt gaat gebeuren: zonder actief plan, als de auto zijn doel al heeft, of als de auto al op zon laadt, staat er 0,00.
+
+
+        **Wat heeft het gekost?** Tik op het kadertje **Kosten** bovenaan Overzicht. Per dag, week, maand, kwartaal of jaar zie je hoeveel er in de auto ging, hoeveel daarvan van de zon kwam (groen) en van het net (grijs), en wat het netdeel kostte tegen de prijs van dat kwartier. Je opslag, btw en de waarde van een zon-kWh stel je één keer in onder *Instellingen → Laadkosten*; de hele geschiedenis rekent mee. Met **Exporteren naar spreadsheet (CSV)** onderaan maak je twee bestanden die je in Excel opent.
+
+
+        Alle bedragen staan in de munt van je prijzen (€, kr, £ of $), geschreven zoals dat in jouw land gebruikelijk is.'
+      grid_options:
+        columns: full
+    - type: markdown
+      content: '### Op je telefoon en horloge
+
+
+        HESC werkt met de Home Assistant-app op je iPhone (of Android-telefoon), ook van buitenaf.
+
+
+        - **Widget of Apple Watch:** zet in de Home Assistant-app de sensor *Samenvatting voor telefoon en horloge* als widget of als complicatie op je horloge. Die laat bijvoorbeeld zien: *EV 72% → 80% by Sat 24-10 07:00 · Charging on sun*.
+
+        - **Siri of Opdrachten:** maak een opdracht met de Home Assistant-handeling *Voer actie uit* → **HESC: Laadplan instellen** (dag, tijd, doel) of **HESC: Laadplan uit**. Zeg daarna bijvoorbeeld *Hé Siri, laad de auto voor morgen*. Ook daar: **HESC: Nu laden** (meteen van het net laden tot een doel), **HESC: Een dag van het weekplan overslaan** (een vrije dag; het plan zelf blijft staan) en de twee die dat weer ongedaan maken.
+
+        - **Vergrendelscherm:** de widget *Details* of *Gauge* van de Home Assistant-app volgt de samenvatting meteen: HESC vraagt de iPhones in zijn telefoonlijst om te verversen als er iets verandert (hooguit eens per 20 minuten). De widgets op het beginscherm verversen ongeveer elke 15 minuten; dat bepaalt iOS.
+
+        - **Android en Wear OS:** de widget *Entiteitsstatus* met de samenvatting, en een widget *Actieknop*, snelknop of horlogetegel die een HESC-knop indrukt (nu laden, stop, dag overslaan, plan uit) of je eigen script start. Android-widgets verversen zelf (meteen met *Real-time* aan bij de meldingstoegang van de app).
+
+        - **Meldingen:** kies je telefoon op de pagina Instellingen (*Telefoon toevoegen of weghalen*).'
+      grid_options:
+        columns: full
+  - type: grid
+    cards:
+    - type: markdown
+      content: '### Situaties
+
+
+        #### "Ik rijd elke werkdag naar mijn werk"
+
+
+        Maak een **weekplan**: vink de dagen aan, zet je vertrektijd en het niveau dat je wilt. Laat het aan staan. Stekker erin als je thuiskomt. Klaar.
+
+
+        #### "Ik ga zaterdag op reis"
+
+
+        Gebruik het plan **één vaste dag per week**: kies *zaterdag*, je vertrektijd en bijvoorbeeld 100%, en zet het aan. Staan dit plan en het weekplan allebei aan, dan gaat het vroegste voor; je weekplan gaat gewoon door.
+
+
+        Dit plan komt elke week terug op dezelfde dag en tijd. Heb je het maar één keer nodig? Zet *Actief* na de reis weer uit.
+
+
+        #### "De auto blijft een paar dagen thuis"
+
+
+        Geen plan nodig. De auto laadt op zon, pakt goedkope kansen als ze komen, en verder blijft de laadpaal op pauze. Pas als de auto meer dan 3% onder *Auto telt als vol bij* zakt, laadt HESC hem bij.
+
+
+        #### "Ik kom thuis met een bijna lege accu en heb de auto vanavond misschien nog nodig"
+
+
+        Zet **Minimumlading** aan (Instellingen, blok 3, *Aan*). Standaard: minstens 20% binnen 3 uur. HESC kiest de goedkoopste kwartieren in die 3 uur, en laadt meteen als er geen prijzen bekend zijn. Beide getallen kun je aanpassen onder *Opties*.
+
+
+        #### "Ik heb een thuisbatterij en de auto krijgt nooit zon"
+
+
+        Zet **Thuisbatterij en auto** aan (Instellingen, blok 3, *Aan*) en vul je thuisbatterij in onder *Opties*. Zie *Thuisbatterij en auto* hierboven.
+
+
+        #### "Ik heb de auto nu nodig, laat het plan maar"
+
+
+        Start zelf met laden (app, knop op de laadpaal of de eigen stand van de laadpaal). HESC ziet dat de auto al laadt en laat hem met rust.
+
+
+        #### "Ik heb laat aangesloten; is er nog tijd?"
+
+
+        HESC houdt dat steeds in de gaten. Is de resterende tijd nog maar net genoeg, dan start het vangnet meteen. Wordt het doel toch niet gehaald, dan krijg je op je vertrektijd een melding op je telefoon: *EV goal missed*, met de stand die gehaald is.
+
+
+        #### "Morgen wordt het zonnig"
+
+
+        Het plan rekent de zon vooraf mee (voorzichtige verwachting, min een beetje voor het huis), dus het koopt minder van het net. Goedkope kansen die de zon overbodig maakt, worden overgeslagen.
+
+
+        #### "De prijzen voor morgen zijn nog niet bekend"
+
+
+        Normaal vóór ongeveer 13:00. Na de eerste dagen gebruikt het plan verwachte prijzen (grijze staven) en wordt het definitief zodra de echte prijzen er zijn.
+
+
+        #### "Mijn auto stopt zelf bij 80%"
+
+
+        Veel auto''s hebben een eigen laadgrens. Ligt die lager dan je doel, dan stopt de laadpaal vanzelf en toont HESC *Finished, charger stopped by itself*. Zet je doel op of onder de grens van de auto, of verhoog die grens in de auto.
+
+
+        #### "De laadpaal reageerde niet"
+
+
+        Laadpalen die via de cloud werken, negeren soms een opdracht. HESC controleert en probeert opnieuw: een geweigerde start of hervatting na 5 minuten, een geweigerde pauze na 30 minuten, elk hoogstens 3 keer. Voordat HESC de laadpaal terugzet in zijn zonnestand, wacht het tot de pauze echt is doorgekomen.
+
+
+        #### "Home Assistant is tijdens het laden herstart"
+
+
+        HESC gebruikt het laatste geldige plan nog tot 10 minuten, zodat een lopende lading niet stopt.
+
+
+        #### "Ik heb Home Assistant net herstart en sommige waarden zijn leeg, of de setup-controle toont een rode <ha-icon icon="hesc:kruis-cirkel" style="--mdc-icon-size:16px;vertical-align:-3px;margin-right:4px"></ha-icon>"
+
+
+        Dat is normaal en komt vanzelf goed; je hoeft niets te doen. Prijzen, instellingen en de setup-controle zijn er meteen weer; accuniveau van de auto, kosten en de meldingenregel binnen ongeveer 5 minuten; de prijsvoorspelling (verwachte prijzen in de grafiek) binnen 15 minuten; het advies voor de startdrempel binnen een paar minuten. Een rode <ha-icon icon="hesc:kruis-cirkel" style="--mdc-icon-size:16px;vertical-align:-3px;margin-right:4px"></ha-icon> kan even verschijnen terwijl de koppeling van je laadpaal, omvormer of auto nog opstart. Na 15 minuten nog steeds rood? Dan ontbreekt er echt iets, en gaan de juiste instellingen vanzelf open. Vlak na een herstart kan de koppeling van de auto ook even een oud accuniveau geven; HESC neemt de correctie mee bij de volgende ronde.
+
+
+        #### "Ik ga op vakantie"
+
+
+        Zet **Vakantiemodus** aan, onder het weekplan. Het weekplan doet dan niets; je dagplan blijft actief, zodat je op de dag dat je terugkomt toch een volle auto kunt hebben. Laden op zon gaat gewoon door. Vul eventueel **Vakantie tot** in: de dag na die datum gaat de vakantiemodus vanzelf uit.'
+      grid_options:
+        columns: full
+    - type: markdown
+      content: '### Wat je één keer instelt
+
+
+        | Instelling | Waar | Standaard | Tip |
+
+        |---|---|---|---|
+
+        | Bruikbare accucapaciteit | tabblad *Laadplan* | 60 kWh | Wat je auto echt kan gebruiken |
+
+        | Laadvermogen van het net | tabblad *Laadplan* | 11 kW | Iets onder wat je laadpaal echt levert geeft wat marge |
+
+        | Goedkope kansen pakken / Goedkoop onder | tabblad *Laadplan* | eigen keuze / 0,05 per kWh | In de munt van je prijzen. Lager = minder maar betere kansen |
+
+        | Auto telt als vol bij | tabblad *Laadplan* en Instellingen | 80% | Het niveau dat zonder plan wordt vastgehouden |
+
+        | Eindcontrole | Instellingen | 60 min | Hoe lang voor vertrek HESC laadt, wat de prijs ook is |
+
+        | Minimumlading | Instellingen, blok 3 | uit (20%, 3 uur) | Schakelaars *Aan* + *Opties* |
+
+        | Thuisbatterij en auto | Instellingen, blok 3 | uit (3 per dag) | Alleen met een thuisbatterij; schakelaars *Aan* + *Opties* |
+
+        | Terug naar zonnestand | Instellingen, blok 3, *Laadplan en meldingen* | ingevuld bij Wallbox | Zet de laadpaal na netladen terug in zijn eigen zonnestand |
+
+        | Telefoons voor meldingen | Instellingen, blok 3, *Laadplan en meldingen* | geen | Kies ze uit de lijst; test met *Testmelding sturen* |
+
+        | Ochtendoverzicht | Instellingen, blok 3, *Laadplan en meldingen* | uit (06:00) | Eén bericht per dag: accuniveau, volgend plan, zon vandaag, gisteren |
+
+        | Laadkosten | Instellingen, *Laadkosten* | opslag 0, btw 0, zon-kWh gratis | Of zet *all-in* aan als je prijssensor al de volledige prijs geeft |'
+      grid_options:
+        columns: full
+    - type: markdown
+      content: '### Waar je kijkt
+
+
+        - **Status** op het dashboard: één regel met wat HESC nu doet en waarom.
+
+        - **Prijsgrafiek** (tabblad *Laadplan*): oranje = gepland, blauwgroen = goedkope kans, grijs = verwachte prijs.
+
+        - **Meldingenregel** (bovenaan Overzicht): *✓ Geen meldingen*, of wat aandacht nodig heeft. Rood = het laaddoel komt in gevaar (ook op je telefoon), oranje = een sensor ontbreekt maar HESC werkt door, grijs = ter info. Tik erop om naar de plek te gaan waar je iets kunt doen.
+
+        - **Verwachte laadkosten** (kadertje bovenaan Overzicht): wat het actieve plan naar verwachting kost.
+
+        - **Kosten** (kadertje bovenaan Overzicht): wat er in de auto ging, van de zon en van het net, en wat het kostte.
+
+        - **Controle** (tabblad *Instellingen*): één regel per onderdeel met een vinkje en de waarden van nu. Klopt er iets niet, dan gaat dat onderdeel vanzelf open en zegt het wat er ontbreekt.
+
+        - **Rapport**: alles wat HESC gemeten en besloten heeft, voor jezelf of als je om hulp vraagt.
+
+
+        Zie ook: [Hoe het werkt](https://github.com/satscan1/hesc-home-ev-solar-control/blob/main/docs/04-how-it-works.nl.md) voor de details, en [Een dag met HESC](https://github.com/satscan1/hesc-home-ev-solar-control/blob/main/docs/08-a-day-with-hesc.nl.md) voor een voorbeelddag.'
+      grid_options:
+        columns: full
+- title: Anleitung
+  path: guide-de
+  icon: hesc:boek
+  subview: true
+  back_path: /hesc-v3/home-ev-solar-control
+  type: sections
+  max_columns: 2
+  sections:
+  - type: grid
+    cards:
+    - type: markdown
+      content: '### <ha-icon icon="hesc:boek" style="--mdc-icon-size:22px;vertical-align:-5px;margin-right:4px"></ha-icon>Intelligentes Laden erklärt
+
+
+        *Eine Anleitung für alle: was HESC mit deinem Auto macht, warum, und was du noch selbst tust.*
+
+
+        [English version](/hesc-v3/guide) · [Nederlandse versie](/hesc-v3/guide-nl)'
+      grid_options:
+        columns: full
+    - type: markdown
+      content: '### Kurz gesagt
+
+
+        Nach etwa zwei Wochen läuft HESC fast von allein. Dein Teil ist klein:
+
+
+        1. **Steck das Auto an**, wenn du nach Hause kommst.
+
+        2. **Sorge dafür, dass dein Plan zu deiner Abfahrt passt.** Ein Wochenplan für deine üblichen Tage (zum Beispiel *80 % an Werktagen um 07:30*) und der Plan *ein fester Tag pro Woche* für einen zusätzlichen Tag (*100 % samstags um 09:00*).
+
+
+        Den Rest erledigt HESC. Zwischen dem Anstecken und der Abfahrt sucht es den günstigsten Weg, das Auto dorthin zu bringen, wo du es haben willst. Zuerst nutzt es kostenlose Sonne, dann die günstigsten Stunden aus dem Netz, und es behält immer ein Sicherheitsnetz, damit das Auto rechtzeitig fertig ist.'
+      grid_options:
+        columns: full
+    - type: markdown
+      content: '### Warum die ersten zwei Wochen zählen
+
+
+        Das meiste funktioniert vom ersten Tag an: Solarladen, der Ladeplan, das Sicherheitsnetz und die Zielprüfung.
+
+
+        Eines wird mit der Zeit besser: **der Blick auf die Preise von morgen.** Die Strompreise für morgen werden gegen 13:00 veröffentlicht. Vorher kennt sie niemand. HESC füllt diese Lücke mit einem erwarteten Preis, auf Basis der Preise deiner eigenen letzten 14 Tage und davon, wie sonnig es morgen wird (an sonnigen Tagen ist es mittags meist günstig und abends teuer).
+
+
+        - **Der erste Tag:** noch keine erwarteten Preise. HESC plant nur mit den bekannten Preisen. Das ist in Ordnung; das Sicherheitsnetz macht das Auto trotzdem fertig.
+
+        - **Nach einem vollen Tag:** eine grobe Erwartung, einfach das Muster von gestern. Erwartete Preise erscheinen als graue Balken in der Preisgrafik, und der Plan kann sie nutzen.
+
+        - **Ab Tag 3:** die Erwartung nutzt den Durchschnitt aller vollen Tage bis dahin.
+
+        - **Ab Tag 14:** sie beruht auf zwei vollen Wochen deiner eigenen Preise.
+
+        - **Danach jede Woche:** HESC verfeinert mit deinem eigenen Verlauf, wie Sonne und Preis auf deinem Markt zusammenhängen.
+
+
+        Erwartete Preise sind eine Schätzung, und so behandelt HESC sie auch: ein bekannter Preis gewinnt immer gegen einen erwarteten, es sei denn, der erwartete ist deutlich günstiger (2 Cent pro kWh oder mehr). Sobald die echten Preise da sind, nutzt der Plan diese.'
+      grid_options:
+        columns: full
+    - type: markdown
+      content: '### Die Reihenfolge, der HESC folgt
+
+
+        Alle 30 Sekunden schaut HESC auf das Auto, die Sonne, die Preise und deinen Plan und stellt sich dieselben Fragen in derselben Reihenfolge:
+
+
+        | # | Frage | Was passiert |
+
+        |---|---|---|
+
+        | 1 | **Scheint die Sonne?** | Deine Wallbox lädt im eigenen Solar-/Eco-Modus mit Sonne, wie sie es immer getan hat (mit HPVC bittet HESC zuerst HPVC, die Sonne durchzulassen). HESC folgt ihr und rechnet die Sonne in den Plan ein, damit es keine Energie kauft, die die Sonne ohnehin liefert. |
+
+        | 2 | **Ist es eine der geplanten günstigsten Viertelstunden?** | HESC startet die Wallbox für diese Viertelstunde aus dem Netz. |
+
+        | 3 | **Wird die Zeit knapp?** | **Sicherheitsnetz:** reicht die verbleibende Zeit gerade noch für das Ziel, startet HESC das Laden, egal zu welchem Preis. |
+
+        | 4 | **Ist es die letzte Stunde vor der Abfahrt und fehlt dem Auto noch etwas?** | **Letzte Prüfung:** HESC lädt bis zu deinem Ziel, egal zu welchem Preis. |
+
+        | 5 | **Ist der Preis gerade sehr niedrig?** | **Günstige Gelegenheit:** HESC lädt jetzt, auch ohne Plan, *außer* es wird später am Tag genug Sonne für dieselbe Aufgabe erwartet (siehe unten). |
+
+        | 6 | **Liegt das Auto unter dem Minimum, das du eingestellt hast?** | **Mindestladung** (optional, standardmäßig aus): das Auto bekommt innerhalb weniger Stunden mindestens diesen Ladestand, in den günstigsten Viertelstunden dieses Zeitfensters. |
+
+        | 7 | Nichts davon | HESC wartet. Das Dashboard sagt dir, warum, zum Beispiel *Waiting for the next planned quarter*. |
+
+
+        Für all das gelten ein paar Regeln:
+
+
+        - **3 % Spielraum.** HESC startet das Laden aus dem Netz erst, wenn das Auto mehr als 3 % unter dem Ziel liegt. Ein Auto bei 78 % mit Ziel 80 % bleibt in Ruhe; bei 76,9 % lädt es. So wird die Wallbox nicht für ein paar Minuten Nichts gestartet.
+
+        - **Welches Ziel?** Mit einem aktiven Plan: das Ziel dieses Plans. Ohne Plan (günstige Gelegenheiten, Nachladen): *Auto gilt als voll bei* (Standard 80 %). Eine günstige Gelegenheit füllt nie ein Auto, das schon als voll gilt.
+
+        - **HESC macht nur rückgängig, was es selbst begonnen hat.** Startest du das Laden selbst, oder lädt das Auto schon mit Sonne, lässt HESC es in Ruhe.
+
+        - **Nach dem Netzladen bleibt die Wallbox nicht an** (Wallboxen mit Start/Stopp-Schalter). Sonst könnte das Auto sich abends in der Spitzenzeit still aus dem Netz nachladen. Ist *Zurück in den Solarmodus* ausgefüllt (Wallbox: *Resume schedule*; HESC füllt es selbst aus), pausiert HESC die Wallbox, prüft, ob die Pause wirklich angekommen ist (Wallboxen über die Cloud reagieren etwa eine Minute später), und setzt sie dann zurück in ihren eigenen Solarmodus, sodass die nächste sonnige Stunde das Auto von selbst lädt. Ohne dieses Feld bleibt die Wallbox pausiert, und HESC schaltet sie wieder ein, wenn genug Sonne da ist, wenn das Auto mehr als 3 % unter das Ziel fällt und kein geplantes Laden kommt, wenn ein Plan startet oder wenn du absteckst.'
+      grid_options:
+        columns: full
+    - type: markdown
+      content: '### Wie der Plan die günstigsten Stunden wählt
+
+
+        Angenommen, du steckst um 18:00 an, das Auto steht bei 40 %, und dein Wochenplan sagt *80 % um 07:30*.
+
+
+        1. **Wie viel wird gebraucht?** 40 % eines 60-kWh-Akkus = 24 kWh.
+
+        2. **Wie viel kommt vor 07:30 von der Sonne?** Nichts, es ist Nacht. (Bei einem Samstagsplan für 14:00 würde die Morgensonne mitzählen.)
+
+        3. **Wie lange dauert das aus dem Netz?** Bei 11 kW: etwas über 2 Stunden, also 9 Viertelstunden.
+
+        4. **Welche 9 Viertelstunden?** Die günstigsten zwischen jetzt und 07:30. Meist irgendwo in der Nacht.
+
+
+        Die geplanten Viertelstunden erscheinen **bernsteinfarben** in der Preisgrafik auf der Seite *Ladeplan*. Ist der Plan nicht aktiv, zeigt die Grafik, was er tun *würde*, markiert als *Vorschau*.'
+      grid_options:
+        columns: full
+    - type: markdown
+      content: '### Günstige Gelegenheiten und die Sonne
+
+
+        *Günstige Gelegenheiten nutzen* (auf der Seite *Ladeplan*) lädt immer dann, wenn der Preis unter *Günstig unter* fällt, auch ohne Plan. Diese Momente erscheinen **blaugrün** in der Preisgrafik.
+
+
+        Ein günstiger Moment am Morgen ist aber kein Schnäppchen, wenn die Nachmittagssonne das Auto kostenlos gefüllt hätte. Bevor HESC eine günstige Gelegenheit nutzt, schaut es deshalb auf die Solarprognose für den Rest des Tages. Deckt die erwartete Sonne das, was das Auto noch braucht, mit 20 % Reserve, wird die günstige Gelegenheit ausgelassen. Du siehst dann *Cheap chance skipped: enough sun today*, und die Preisgrafik lässt diese Viertelstunden weg.
+
+
+        **Netzladen und Sonne gleichzeitig.** Lässt deine Wallbox HESC den Ladestrom einstellen (bei einer Wallbox: die Einstellung *Maximum charging current*, die ein Administratorkonto braucht), regelt HESC die Wallbox herunter, während sie aus dem Netz lädt und die Sonne scheint. Dann kommt mehr von der Ladung von deinen Solarpaneelen und weniger aus dem Netz. Das ist normales Verhalten, du musst nichts einschalten: HESC tut es nur, solange das Auto trotzdem rechtzeitig voll ist, und stellt den Strom danach wieder zurück. Ob deine Wallbox 1 oder 3 Phasen nutzt, ermittelt HESC selbst.
+
+
+        **Phasenhinweis.** Manche Wallboxen starten erst, wenn jede Phase genug Sonne übrig hat (eine Wallbox im Eco-Modus etwa 480 W pro Phase, ein Easee 6 A pro Phase). Sind deine Solarpaneele ungleich auf die Phasen verteilt, entscheidet dann die schwächste Phase, wann dein Auto mit Sonne laden kann. Wählst du unter den Quellen die Netzleistung pro Phase, misst HESC das an sonnigen Tagen und sagt dir, was es gesehen hat: zuerst die Verteilung über die Phasen, später, wie oft die schwächste Phase deine Wallbox am Starten gehindert hat. Die sonnigste Zeit wird für deinen Standort berechnet, deshalb sagt HESC erst *bestätigt*, wenn es sie gesehen hat. Es ist nur ein Hinweis, HESC ändert nichts.'
+      grid_options:
+        columns: full
+    - type: markdown
+      content: '### Hausspeicher und Auto
+
+
+        *Optional, standardmäßig aus. Nur für Häuser mit einem Hausspeicher.*
+
+
+        An einem sonnigen Morgen nimmt meist der Hausspeicher zuerst die ganze überschüssige Sonne. Die Wallbox im Solarmodus sieht dann keinen Überschuss und wartet, manchmal bis der Hausspeicher am Nachmittag voll ist. An einem Tag mit weniger Sonne kann das heißen, dass das Auto nichts bekommt.
+
+
+        Mit **Hausspeicher und Auto** eingeschaltet hilft HESC dem Auto, an die Reihe zu kommen:
+
+
+        1. **Kickstart.** Ist das Auto angesteckt und wartet auf Sonne, lädt der Hausspeicher seit ein paar Minuten und sagt die vorsichtige Prognose, dass jetzt genug Sonne da ist, prüft HESC den Rest des Tages. Ist deutlich mehr Sonne übrig, als der Hausspeicher noch braucht (mit 20 % Reserve und mindestens *Minimale Restsonne für das Auto*)? Dann gibt HESC der Wallbox einen kurzen Start. Dein Batteriesystem sieht, dass das Auto lädt, und hört auf, den Hausspeicher zu füllen; HESC setzt die Wallbox danach zurück in ihren eigenen Solarmodus, der mit der nun freien Sonne weiterlädt.
+
+        2. **Zurück zum Hausspeicher.** Später am Tag, wenn die restliche Sonne gerade noch reicht, um den Hausspeicher zu füllen, lässt HESC die Wallbox wieder warten, damit der Hausspeicher bis zum Abend voll ist. Danach gibt es an diesem Tag keinen neuen Kickstart.
+
+
+        Während des kurzen Starts kann der Hausspeicher kurz etwas Leistung an das Auto abgeben. Das ist erwartet und gering.
+
+
+        HESC steuert den Hausspeicher nie selbst. Es entscheidet nur, wann das Auto startet, und liest Ladestand und Leistung des Hausspeichers. Es tut nichts, während ein Ladeplan lädt, während einer HPVC-Freigabe oder nach Sonnenuntergang, und höchstens ein paar Mal am Tag (*Kickstarts pro Tag*, Standard 3, mit mindestens 30 Minuten dazwischen).
+
+
+        Was du ausfüllst (Einstellungen, Block 3, *Hausspeicher und Auto* → *Optionen*): den oder die Ladestandsensoren deines Hausspeichers, den oder die Leistungssensoren (positiv = laden) und seine Gesamtgröße in kWh. Außerdem braucht es den Start/Stopp-Schalter der Wallbox und *Zurück in den Solarmodus* (Block 3, *Ladeplan und Meldungen*); beim Wallbox-Typ Wallbox ist beides schon ausgefüllt. Ist das Auto angesteckt, zeigt die Übersicht in einer zusätzlichen Zeile unter *Aktueller Stand*, was es gerade tut.'
+      grid_options:
+        columns: full
+    - type: markdown
+      content: '### Was wird es kosten?
+
+
+        Die Anzeige **Erwartete Ladekosten** oben auf der Übersicht zeigt, was der aktive Plan aus dem Netz voraussichtlich kostet, nach derselben Regel wie die Seite Kosten (der Preis jeder geplanten Viertelstunde plus dein Aufschlag und die MwSt., oder der Endpreis). Sie zählt nur Netzladen, das wirklich stattfindet: ohne aktiven Plan, wenn das Auto sein Ziel schon erreicht hat oder schon mit Sonne lädt, zeigt sie 0,00.
+
+
+        **Was hat es gekostet?** Tippe auf der Übersicht auf **Kosten**. Pro Tag, Woche, Monat, Quartal oder Jahr siehst du, wie viel ins Auto ging, wie viel davon von der Sonne (grün) und aus dem Netz (grau) kam, und was der Netzanteil zum Preis der jeweiligen Viertelstunde gekostet hat. Aufschlag, MwSt. und den Wert einer Solar-kWh stellst du einmal unter *Einstellungen → Ladekosten* ein; der ganze Verlauf wird angepasst. **In Tabelle exportieren (CSV)** ganz unten schreibt zwei Dateien, die du in Excel öffnen kannst.
+
+
+        Alle Beträge sind in der Währung deiner Preise (€, kr, £ oder $), so geschrieben, wie es in deinem Land üblich ist.'
+      grid_options:
+        columns: full
+    - type: markdown
+      content: '### Auf Telefon und Uhr
+
+
+        HESC funktioniert mit der Home-Assistant-App auf deinem iPhone (oder Android-Telefon), auch unterwegs.
+
+
+        - **Widget oder Apple Watch:** füge in der Home-Assistant-App den Sensor *Zusammenfassung für Telefon und Uhr* als Widget oder als Komplikation auf der Uhr hinzu. Er zeigt zum Beispiel *EV 72% → 80% by Sat 24-10 07:00 · Charging on sun*.
+
+        - **Siri oder Kurzbefehle:** erstelle einen Kurzbefehl mit der Home-Assistant-Aktion *Aktion ausführen* → **HESC: Ladeplan festlegen** (Tag, Uhrzeit, Ziel) oder **HESC: Ladeplan aus**. Sag dann zum Beispiel *Hey Siri, lade das Auto für morgen*. Außerdem gibt es: **HESC: Jetzt laden** (bis zu einem Ziel, aus dem Netz, sofort), **HESC: Einen Tag des Wochenplans überspringen** (ein freier Tag; der Plan selbst bleibt) und die zwei, die das rückgängig machen.
+
+        - **Sperrbildschirm:** das Widget *Details* oder *Gauge* der Home-Assistant-App folgt der Zusammenfassung sofort: HESC bittet die iPhones in seiner Telefonliste, es zu aktualisieren, wenn sich etwas ändert (höchstens alle 20 Minuten). Die Widgets auf dem Homescreen aktualisieren sich etwa alle 15 Minuten, das entscheidet iOS.
+
+        - **Android und Wear OS:** das Widget *Entity state* mit der Zusammenfassung und ein Widget *Action button*, eine Schnelleinstellungskachel oder eine Uhrenkachel, die eine HESC-Taste drückt (jetzt laden, stoppen, Tag überspringen, Plan aus) oder dein eigenes Skript ausführt. Android-Widgets aktualisieren sich von selbst (sofort mit *Real-time* im Benachrichtigungszugriff der App).
+
+        - **Benachrichtigungen:** wähle dein Telefon auf der Seite Einstellungen (*Telefon hinzufügen oder entfernen*).'
+      grid_options:
+        columns: full
+  - type: grid
+    cards:
+    - type: markdown
+      content: '### Situationen
+
+
+        #### "Ich fahre jeden Werktag zur Arbeit"
+
+
+        Erstelle einen **Wochenplan**: hake die Tage an, stelle die Abfahrtszeit und den gewünschten Ladestand ein. Lass ihn aktiv. Steck an, wenn du nach Hause kommst. Das ist alles.
+
+
+        #### "Am Samstag mache ich einen Ausflug"
+
+
+        Nutze den Plan **ein fester Tag pro Woche**: wähle *Samstag*, die Abfahrtszeit und zum Beispiel 100 %, und schalte ihn ein. Sind er und der Wochenplan beide aktiv, gewinnt der frühere; dein Wochenplan läuft einfach weiter.
+
+
+        Dieser Plan kommt jede Woche am selben Tag und zur selben Uhrzeit wieder. Brauchst du ihn nur einmal? Schalte *Aktiv* nach dem Ausflug aus.
+
+
+        #### "Das Auto bleibt ein paar Tage zu Hause"
+
+
+        Kein Plan nötig. Das Auto lädt mit Sonne, nutzt günstige Gelegenheiten, wenn sie kommen, und sonst bleibt die Wallbox pausiert. Erst wenn das Auto mehr als 3 % unter *Auto gilt als voll bei* fällt, lädt HESC nach.
+
+
+        #### "Ich bin mit fast leerem Akku heimgekommen und brauche das Auto vielleicht heute Abend"
+
+
+        Schalte **Mindestladung** ein (Einstellungen, Block 3, *An*). Standard: mindestens 20 % innerhalb von 3 Stunden. HESC wählt die günstigsten Viertelstunden in diesen 3 Stunden und lädt sofort, wenn keine Preise bekannt sind. Beide Zahlen kannst du unter *Optionen* ändern.
+
+
+        #### "Ich habe einen Hausspeicher und das Auto bekommt nie Sonne"
+
+
+        Schalte **Hausspeicher und Auto** ein (Einstellungen, Block 3, *An*) und trage deinen Hausspeicher unter *Optionen* ein. Siehe *Hausspeicher und Auto* oben.
+
+
+        #### "Ich brauche das Auto jetzt, vergiss den Plan"
+
+
+        Starte das Laden selbst (App, Taste an der Wallbox oder der eigene Modus der Wallbox). HESC sieht, dass das Auto schon lädt, und lässt es in Ruhe.
+
+
+        #### "Ich habe spät angesteckt; reicht die Zeit noch?"
+
+
+        HESC prüft das ständig. Reicht die verbleibende Zeit gerade noch, startet das Sicherheitsnetz sofort. Wird das Ziel trotzdem verfehlt, bekommst du zu deiner Abfahrtszeit eine Benachrichtigung aufs Telefon: *EV goal missed*, mit dem erreichten Ladestand.
+
+
+        #### "Morgen wird es sonnig"
+
+
+        Der Plan rechnet die Sonne vorab ein (vorsichtige Prognose, minus etwas für das Haus) und kauft deshalb weniger aus dem Netz. Günstige Gelegenheiten, die die Sonne überflüssig machen würde, werden ausgelassen.
+
+
+        #### "Die Preise von morgen sind noch nicht bekannt"
+
+
+        Normal vor etwa 13:00. Nach den ersten Tagen nutzt der Plan erwartete Preise (graue Balken) und wird genauer, sobald die echten Preise da sind.
+
+
+        #### "Mein Auto hört bei 80 % von selbst auf"
+
+
+        Viele Autos haben ein eigenes Ladelimit. Liegt es unter deinem Ziel, stoppt die Wallbox von selbst, und HESC zeigt *Finished, charger stopped by itself*. Setze dein Ziel auf oder unter das Limit des Autos, oder erhöhe das Limit im Auto.
+
+
+        #### "Die Wallbox hat nicht reagiert"
+
+
+        Wallboxen, die über die Cloud arbeiten, ignorieren manchmal einen Befehl. HESC prüft und versucht es erneut: einen abgelehnten Start oder ein abgelehntes Fortsetzen nach 5 Minuten, eine abgelehnte Pause nach 30 Minuten, jeweils höchstens 3 Mal. Bevor HESC die Wallbox zurück in ihren Solarmodus setzt, wartet es, bis die Pause wirklich angekommen ist.
+
+
+        #### "Home Assistant wurde während des Ladens neu gestartet"
+
+
+        HESC nutzt den letzten gültigen Plan bis zu 10 Minuten weiter, damit ein laufendes Laden nicht stoppt.
+
+
+        #### "Ich habe Home Assistant gerade neu gestartet und manche Werte sind leer, oder die Prüfung der Einrichtung zeigt ein rotes <ha-icon icon="hesc:kruis-cirkel" style="--mdc-icon-size:16px;vertical-align:-3px;margin-right:4px"></ha-icon>"
+
+
+        Das ist normal und erledigt sich von selbst; du musst nichts tun. Preise, Einstellungen und die Prüfung der Einrichtung sind sofort wieder da; Ladestand des Autos, Kosten und die Hinweiszeile innerhalb von etwa 5 Minuten; die Preisprognose (erwartete Preise in der Grafik) innerhalb von 15 Minuten; die Empfehlung zur Startschwelle innerhalb weniger Minuten. Ein rotes <ha-icon icon="hesc:kruis-cirkel" style="--mdc-icon-size:16px;vertical-align:-3px;margin-right:4px"></ha-icon> kann kurz erscheinen, während die Integration deiner Wallbox, deines Wechselrichters oder deines Autos noch startet. Nach 15 Minuten noch rot? Dann fehlt wirklich etwas, und die passenden Einstellungen öffnen sich von selbst. Direkt nach einem Neustart kann die Integration des Autos auch kurz einen alten Ladestand melden; HESC folgt der Korrektur in seiner nächsten Runde.
+
+
+        #### "Ich bin im Urlaub"
+
+
+        Schalte **Urlaubsmodus** unter dem Wochenplan ein. Der Wochenplan tut dann nichts; dein Plan für einen Tag bleibt aktiv, sodass du am Tag deiner Rückkehr trotzdem ein volles Auto haben kannst. Solarladen läuft wie gewohnt weiter. Stelle bei Bedarf **Urlaub bis** ein: am Tag nach diesem Datum schaltet sich der Urlaubsmodus von selbst aus.'
+      grid_options:
+        columns: full
+    - type: markdown
+      content: '### Was du einmal einstellst
+
+
+        | Einstellung | Wo | Standard | Tipp |
+
+        |---|---|---|---|
+
+        | Nutzbare Akkukapazität | Seite *Ladeplan* | 60 kWh | Was dein Auto wirklich nutzen kann |
+
+        | Ladeleistung aus dem Netz | Seite *Ladeplan* | 11 kW | Etwas unter dem, was deine Wallbox wirklich liefert, gibt etwas Reserve |
+
+        | Günstige Gelegenheiten nutzen / Günstig unter | Seite *Ladeplan* | deine Wahl / 0,05 pro kWh | In der Währung deiner Preise. Niedriger = weniger, aber bessere Gelegenheiten |
+
+        | Auto gilt als voll bei | Seite *Ladeplan* und Einstellungen | 80 % | Der Ladestand, der ohne Plan gehalten wird |
+
+        | Letzte Prüfung | Einstellungen | 60 min | Wie lange vor der Abfahrt HESC lädt, egal zu welchem Preis |
+
+        | Mindestladung | Einstellungen, Block 3 | aus (20 %, 3 h) | Schalter *An* + *Optionen* |
+
+        | Hausspeicher und Auto | Einstellungen, Block 3 | aus (3 pro Tag) | Nur mit Hausspeicher; Schalter *An* + *Optionen* |
+
+        | Zurück in den Solarmodus | Einstellungen, Block 3, *Ladeplan und Meldungen* | für Wallbox ausgefüllt | Setzt die Wallbox nach dem Netzladen zurück in ihren eigenen Solarmodus |
+
+        | Telefone für Benachrichtigungen | Einstellungen, Block 3, *Ladeplan und Meldungen* | keine | Aus der Liste wählen; mit *Testbenachrichtigung senden* testen |
+
+        | Morgenübersicht | Einstellungen, Block 3, *Ladeplan und Meldungen* | aus (06:00) | Eine Nachricht am Tag: Ladestand, nächster Plan, Sonne heute, gestern |
+
+        | Ladekosten | Einstellungen, *Ladekosten* | Aufschlag 0, MwSt. 0, Solar-kWh gratis | Oder *Endpreis* einschalten, wenn dein Preissensor schon den vollen Preis hat |'
+      grid_options:
+        columns: full
+    - type: markdown
+      content: '### Wo du nachschaust
+
+
+        - **Status** auf dem Dashboard: eine Zeile, die sagt, was HESC gerade tut und warum.
+
+        - **Preisgrafik** (Seite *Ladeplan*): bernsteinfarben = geplant, blaugrün = günstige Gelegenheit, grau = erwarteter Preis.
+
+        - **Hinweiszeile** (oben auf der Übersicht): *✓ Keine Hinweise* oder was Aufmerksamkeit braucht. Rot = das Ladeziel ist in Gefahr (auch auf deinem Telefon), orange = ein Sensor fehlt, aber HESC arbeitet weiter, grau = nur zur Info. Tippe darauf, um dorthin zu gehen, wo du handeln kannst.
+
+        - **Erwartete Ladekosten** (Anzeige oben auf der Übersicht): was der aktive Plan voraussichtlich kostet.
+
+        - **Kosten** (Anzeige oben auf der Übersicht): was ins Auto ging, von der Sonne und aus dem Netz, und was es gekostet hat.
+
+        - **Prüfung der Einrichtung** (Seite *Einstellungen*): eine Zeile pro Teil mit Haken und den aktuellen Werten. Stimmt etwas nicht, öffnet sich dieser Teil von selbst und sagt, was fehlt.
+
+        - **Bericht**: alles, was HESC gemessen und entschieden hat, für dich selbst oder wenn du um Hilfe bittest.
+
+
+        Siehe auch: [So funktioniert es](https://github.com/satscan1/hesc-home-ev-solar-control/blob/main/docs/04-how-it-works.de.md) für die Details und [Ein Tag mit HESC](https://github.com/satscan1/hesc-home-ev-solar-control/blob/main/docs/08-a-day-with-hesc.de.md) für einen Beispieltag.'
+      grid_options:
+        columns: full
+- type: sections
+  title: Costs
+  path: costs
+  icon: hesc:euro
+  subview: true
+  back_path: /hesc-v3/home-ev-solar-control
+  max_columns: 2
+  sections:
+  - type: grid
+    column_span: 2
+    cards:
+    - type: markdown
+      content: '### <ha-icon icon="hesc:euro" style="--mdc-icon-size:22px;vertical-align:-5px;margin-right:4px"></ha-icon>Charging costs
+
+        How much went into the EV, split into <font color="#22c55e"><b>sun</b></font> and <font color="#94a3b8"><b>grid</b></font>, and what it cost. HESC counts this itself every 30 seconds while the EV charges. Grid at the price of that quarter (from your price source), plus mark-up and VAT if you set them; sun at the feed-in compensation you miss. Change these in Settings → Charging costs; the whole history follows.'
+      grid_options:
+        columns: full
+    - type: horizontal-stack
+      cards:
+      - type: custom:hesc-option-button
+        entity: select.hesc_v3_charging_costs_period
+        option: Days
+      - type: custom:hesc-option-button
+        entity: select.hesc_v3_charging_costs_period
+        option: Weeks
+      - type: custom:hesc-option-button
+        entity: select.hesc_v3_charging_costs_period
+        option: Months
+      - type: custom:hesc-option-button
+        entity: select.hesc_v3_charging_costs_period
+        option: Quarters
+      - type: custom:hesc-option-button
+        entity: select.hesc_v3_charging_costs_period
+        option: Year
+      grid_options:
+        columns: full
+    - type: custom:hesc-costs
+      view: totals
+      entities:
+        costs: sensor.hesc_v3_charging_costs
+        costs_all_in: switch.hesc_v3_costs_price_is_all_in
+        costs_markup: number.hesc_v3_costs_mark_up_per_kwh_energy_tax_supplier
+        costs_vat: number.hesc_v3_costs_vat
+        feed_in: number.hesc_v3_feed_in_compensation
+        costs_period: select.hesc_v3_charging_costs_period
+        prices: sensor.hesc_v3_prices
+      grid_options:
+        columns: full
+    - type: custom:hesc-costs
+      view: tiles
+      entities:
+        costs: sensor.hesc_v3_charging_costs
+        costs_all_in: switch.hesc_v3_costs_price_is_all_in
+        costs_markup: number.hesc_v3_costs_mark_up_per_kwh_energy_tax_supplier
+        costs_vat: number.hesc_v3_costs_vat
+        feed_in: number.hesc_v3_feed_in_compensation
+        costs_period: select.hesc_v3_charging_costs_period
+        prices: sensor.hesc_v3_prices
+      grid_options:
+        columns: full
+    - type: markdown
+      content: '<small>▲ more expensive than the period before · ▼ cheaper · = about the same. Bar: <font color="#22c55e">■</font> sun <font color="#94a3b8">■</font> grid; bar length = kWh compared with the biggest period shown.</small>'
+      grid_options:
+        columns: full
+    - type: tile
+      entity: button.hesc_v3_export_charging_costs
+      name: Export to spreadsheet (CSV)
+      icon: mdi:file-delimited-outline
+      color: blue
+      hide_state: true
+      tap_action:
+        action: perform-action
+        perform_action: button.press
+        target:
+          entity_id: button.hesc_v3_export_charging_costs
+      icon_tap_action:
+        action: perform-action
+        perform_action: button.press
+        target:
+          entity_id: button.hesc_v3_export_charging_costs
+      grid_options:
+        columns: full
+        rows: auto
+    - type: markdown
+      content: <small>{% set i = states('sensor.hesc_v3_charging_costs_export') %}{{ i if i not in ['unknown', 'unavailable', ''] else 'Not exported yet. Saves two files (per day and per month) in the hesc-data folder of your Home Assistant config; open them with Samba or the File editor.' }}</small>
+      grid_options:
+        columns: full
+        rows: auto
+- title: Seizoen
+  path: seizoen
+  subview: true
+  back_path: /hesc-v3/home-ev-solar-control
+  type: panel
+  cards:
+  - type: markdown
+    text_only: true
+    content: '{%- set m = now().month -%}{%- set s = ''lente'' if m in [3, 4, 5] else (''zomer'' if m in [6, 7, 8] else (''herfst'' if m in [9, 10, 11] else ''winter'')) -%}
+
+      <a href="/hesc-v3/home-ev-solar-control"><img src="/hesc_v3_frontend/seizoen/hesc-seizoen-{{ s }}.webp?v=1" width="100%" alt="HESC · {{ s }}"></a>'
+- title: Kiosk
+  path: kiosk
+  subview: true
+  back_path: /hesc-v3/home-ev-solar-control
+  type: sections
+  max_columns: 3
+  sections:
+  - type: grid
+    cards:
+    - type: custom:hesc-style
+      style:
+        ha-markdown$: 'h2 ha-icon { --mdc-icon-size: 24px; margin-right: 4px; }
+
+          h2 a ha-icon { --mdc-icon-size: 20px; margin-right: 0; vertical-align: 1px; }
+
+          h2 ha-icon[icon="hesc:kalender-klok"] { vertical-align: 3.7px; }'
+      grid_options:
+        columns: full
+      card:
+        type: markdown
+        text_only: true
+        content: '## <ha-icon icon="hesc:kalender-klok"></ha-icon> Charging plan · one fixed day per week&nbsp; <a href="/hesc-v3/guide" title="Guide: how smart charging works"><ha-icon icon="mdi:information-outline" style="--mdc-icon-size:20px;color:#8ab4f8;vertical-align:-2px"></ha-icon></a>'
+    - type: tile
+      entity: select.hesc_v3_charge_plan_day
+      name: Day
+      hide_state: true
+      features:
+      - type: select-options
+      features_position: bottom
+      grid_options:
+        columns: 6
+        rows: auto
+    - type: tile
+      entity: select.hesc_v3_charge_plan_time
+      name: Time
+      hide_state: true
+      features:
+      - type: select-options
+      features_position: bottom
+      grid_options:
+        columns: 6
+        rows: auto
+    - type: tile
+      entity: select.hesc_v3_charge_plan_goal
+      name: Charging goal
+      hide_state: true
+      features:
+      - type: select-options
+      features_position: bottom
+      grid_options:
+        columns: 6
+        rows: auto
+    - type: tile
+      entity: switch.hesc_v3_charge_plan
+      name: Active
+      hide_state: true
+      features:
+      - type: toggle
+      features_position: bottom
+      grid_options:
+        columns: 6
+        rows: auto
+    - type: tile
+      entity: select.hesc_v3_charge_now_to
+      name: Charge now to
+      icon: mdi:lightning-bolt
+      features:
+      - type: select-options
+      features_position: inline
+      grid_options:
+        columns: full
+        rows: auto
+  - type: grid
+    cards:
+    - type: custom:hesc-style
+      style: '.title, h2.heading { font-size: 20px !important; font-weight: 700 !important; line-height: normal !important; color: var(--primary-text-color) !important; letter-spacing: normal !important; }
+
+        ha-icon { --mdc-icon-size: 24px; }
+
+        .title { padding-top: 2px; }'
+      grid_options:
+        columns: full
+      card:
+        type: heading
+        heading: Charging plan · weekly schedule
+        heading_style: title
+        icon: hesc:kalender
+    - type: horizontal-stack
+      grid_options:
+        columns: full
+        rows: auto
+      cards:
+      - type: button
+        entity: switch.hesc_v3_repeating_plan_monday
+        name: Mo
+        show_icon: true
+        show_name: true
+        show_state: false
+        state_color: true
+        tap_action:
+          action: toggle
+        icon: mdi:calendar-check
+        icon_height: 22px
+      - type: button
+        entity: switch.hesc_v3_repeating_plan_tuesday
+        name: Tu
+        show_icon: true
+        show_name: true
+        show_state: false
+        state_color: true
+        tap_action:
+          action: toggle
+        icon: mdi:calendar-check
+        icon_height: 22px
+      - type: button
+        entity: switch.hesc_v3_repeating_plan_wednesday
+        name: We
+        show_icon: true
+        show_name: true
+        show_state: false
+        state_color: true
+        tap_action:
+          action: toggle
+        icon: mdi:calendar-check
+        icon_height: 22px
+      - type: button
+        entity: switch.hesc_v3_repeating_plan_thursday
+        name: Th
+        show_icon: true
+        show_name: true
+        show_state: false
+        state_color: true
+        tap_action:
+          action: toggle
+        icon: mdi:calendar-check
+        icon_height: 22px
+      - type: button
+        entity: switch.hesc_v3_repeating_plan_friday
+        name: Fr
+        show_icon: true
+        show_name: true
+        show_state: false
+        state_color: true
+        tap_action:
+          action: toggle
+        icon: mdi:calendar-check
+        icon_height: 22px
+      - type: button
+        entity: switch.hesc_v3_repeating_plan_saturday
+        name: Sa
+        show_icon: true
+        show_name: true
+        show_state: false
+        state_color: true
+        tap_action:
+          action: toggle
+        icon: mdi:calendar-check
+        icon_height: 22px
+      - type: button
+        entity: switch.hesc_v3_repeating_plan_sunday
+        name: Su
+        show_icon: true
+        show_name: true
+        show_state: false
+        state_color: true
+        tap_action:
+          action: toggle
+        icon: mdi:calendar-check
+        icon_height: 22px
+    - type: tile
+      entity: select.hesc_v3_repeating_plan_time
+      name: Time
+      hide_state: true
+      features:
+      - type: select-options
+      features_position: bottom
+      grid_options:
+        columns: 6
+        rows: auto
+    - type: tile
+      entity: select.hesc_v3_repeating_plan_goal
+      name: Charging goal
+      hide_state: true
+      features:
+      - type: select-options
+      features_position: bottom
+      grid_options:
+        columns: 6
+        rows: auto
+    - type: tile
+      entity: switch.hesc_v3_repeating_plan
+      name: Active
+      hide_state: true
+      features:
+      - type: toggle
+      features_position: inline
+      grid_options:
+        columns: full
+        rows: auto
+    - type: tile
+      entity: switch.hesc_v3_holiday_mode
+      name: Holiday mode
+      icon: mdi:palm-tree
+      hide_state: true
+      features:
+      - type: toggle
+      features_position: inline
+      grid_options:
+        columns: full
+        rows: auto
+    - type: conditional
+      conditions:
+      - condition: state
+        entity: switch.hesc_v3_holiday_mode
+        state: 'on'
+      card:
+        type: tile
+        entity: date.hesc_v3_holiday_until
+        name: Holiday until (optional)
+        icon: mdi:calendar-end
+        vertical: false
+      grid_options:
+        columns: full
+        rows: auto
+    - type: conditional
+      conditions:
+      - condition: state
+        entity: switch.hesc_v3_repeating_plan
+        state: 'on'
+      card:
+        type: tile
+        entity: date.hesc_v3_skip_repeating_plan_on
+        name: Skip one day (day off)
+        icon: mdi:calendar-remove
+        vertical: false
+      grid_options:
+        columns: full
+        rows: auto
+  - type: grid
+    cards:
+    - type: custom:hesc-style
+      style:
+        ha-markdown$: 'h2 ha-icon { --mdc-icon-size: 24px; margin-right: 4px; }
+
+          h2 a ha-icon { --mdc-icon-size: 20px; margin-right: 0; vertical-align: 1px; }
+
+          h2 ha-icon[icon="hesc:schuifregelaars"] { vertical-align: 3.4px; }'
+      grid_options:
+        columns: full
+      card:
+        type: markdown
+        text_only: true
+        content: '## <ha-icon icon="hesc:schuifregelaars"></ha-icon> Charging settings&nbsp; <a href="/hesc-v3/guide" title="Guide: how smart charging works"><ha-icon icon="mdi:information-outline" style="--mdc-icon-size:20px;color:#8ab4f8;vertical-align:-2px"></ha-icon></a>'
+    - type: tile
+      entity: switch.hesc_v3_charge_plan_take_cheap_chances
+      name: Take cheap chances
+      features:
+      - type: toggle
+      features_position: bottom
+      grid_options:
+        columns: 6
+        rows: auto
+    - type: tile
+      entity: number.hesc_v3_charge_plan_opportunity_price
+      name: Cheap when below
+      features:
+      - type: numeric-input
+        style: buttons
+      features_position: bottom
+      grid_options:
+        columns: 6
+        rows: auto
+    - type: tile
+      entity: number.hesc_v3_ev_usable_battery_capacity
+      name: Usable battery capacity
+      features:
+      - type: numeric-input
+        style: buttons
+      features_position: bottom
+      grid_options:
+        columns: 6
+        rows: auto
+    - type: tile
+      entity: number.hesc_v3_charge_plan_grid_charging_power
+      name: Grid charging power
+      features:
+      - type: numeric-input
+        style: buttons
+      features_position: bottom
+      grid_options:
+        columns: 6
+        rows: auto
+  - type: grid
+    column_span: 3
+    cards:
+    - type: conditional
+      grid_options:
+        columns: full
+      conditions:
+      - condition: or
+        conditions:
+        - condition: state
+          entity: sensor.hesc_v3_setup
+          state_not: ok
+        - condition: state
+          entity: binary_sensor.hesc_v3_configuration_valid
+          state_not: 'on'
+        - condition: state
+          entity: binary_sensor.hesc_v3_inputs_valid
+          state_not: 'on'
+        - condition: state
+          entity: sensor.hesc_v3_notice
+          state_not:
+          - none
+          - unknown
+          - unavailable
+          - ''
+      card:
+        type: vertical-stack
+        cards:
+        - type: custom:hesc-style
+          style: 'ha-card { text-align: center; }'
+          card:
+            type: markdown
+            text_only: true
+            content: <a href="/hesc-v3/home-ev-solar-control"><img src="/hesc_v3_frontend/hesc-logo.png?v=1" width="120" height="120" alt="HESC"></a>
+        - type: custom:hesc-style
+          style:
+            ha-markdown$: 'h2 ha-icon { --mdc-icon-size: 24px; margin-right: 4px; }
+
+              h2 a ha-icon { --mdc-icon-size: 20px; margin-right: 0; vertical-align: 1px; }
+
+              h2 ha-icon[icon="hesc:ev-zon"] { vertical-align: 4.8px; }'
+          card:
+            type: markdown
+            content: '{%- set setup_ok = is_state(''sensor.hesc_v3_setup'', ''ok'') and is_state(''binary_sensor.hesc_v3_configuration_valid'', ''on'') -%}
+
+              {%- set inputs_ok = is_state(''binary_sensor.hesc_v3_inputs_valid'', ''on'') -%}
+
+              {%- set n = states(''sensor.hesc_v3_notice'') -%}
+
+              {%- set p = state_attr(''sensor.hesc_v3_notice'', ''prio'') | int(2) -%}
+
+              ## <ha-icon icon="hesc:ev-zon"></ha-icon> HESC
+
+
+              <font size="5">{{ ''<ha-icon icon="hesc:vinkje-cirkel" style="--mdc-icon-size:28px;vertical-align:-7px;margin-right:8px;color:#22c55e"></ha-icon>Setup OK'' if setup_ok else ''<ha-icon icon="hesc:kruis-cirkel" style="--mdc-icon-size:28px;vertical-align:-7px;margin-right:8px;color:#ef4444"></ha-icon>Setup needs attention'' }}</font>
+
+
+              <font size="5">{{ ''<ha-icon icon="hesc:vinkje-cirkel" style="--mdc-icon-size:28px;vertical-align:-7px;margin-right:8px;color:#22c55e"></ha-icon>Inputs OK'' if inputs_ok else ''<ha-icon icon="hesc:waarschuwing" style="--mdc-icon-size:28px;vertical-align:-7px;margin-right:8px;color:#fbbf24"></ha-icon>Inputs missing'' }}</font>
+
+
+              <font size="5">{{ ''<ha-icon icon="hesc:vinkje-cirkel" style="--mdc-icon-size:28px;vertical-align:-7px;margin-right:8px;color:#22c55e"></ha-icon>No notices'' if n in [''none'', ''unknown'', ''unavailable'', ''''] else ((''<ha-icon icon="hesc:kruis-cirkel" style="--mdc-icon-size:28px;vertical-align:-7px;margin-right:8px;color:#ef4444"></ha-icon>'' if p == 1 else ''<ha-icon icon="hesc:waarschuwing" style="--mdc-icon-size:28px;vertical-align:-7px;margin-right:8px;color:#fbbf24"></ha-icon>'') ~ n) }}</font>
+
+
+              Now: **{{ states(''sensor.hesc_v3_state'') }}** · EV **{{ states(''sensor.hesc_v3_ev_battery_level_with_fallbacks'') }} %**'
+    - type: custom:hesc-style
+      style:
+        ha-markdown$: 'h2 ha-icon { --mdc-icon-size: 24px; margin-right: 4px; }
+
+          h2 a ha-icon { --mdc-icon-size: 20px; margin-right: 0; vertical-align: 1px; }
+
+          h2 ha-icon[icon="hesc:kalender"] { vertical-align: 3.5px; }'
+      grid_options:
+        columns: full
+      card:
+        type: markdown
+        text_only: true
+        content: '## <ha-icon icon="hesc:kalender"></ha-icon> Charge plan'
+    - type: custom:hesc-style
+      style: '#root { align-items: stretch !important; } #root > *:first-child > * { flex: 2 1 0 !important; min-width: 0; } #root > *:last-child > * { flex: 1 1 0 !important; min-width: 0; }'
+      grid_options:
+        columns: full
+      card:
+        type: horizontal-stack
+        cards:
+        - type: custom:hesc-style
+          style: 'ha-card { height: 100%; }'
+          grid_options:
+            columns: 18
+            rows: auto
+          card:
+            type: markdown
+            content: '{%- set r = state_attr(''sensor.hesc_v3_charge_plan'', ''plan'') -%}{%- set p = r if r is mapping else (r | from_json if r else {}) -%}
+
+              {%- set on = p.active | default(false) -%}
+
+              {%- set q = p.quarters | default(0) -%}
+
+              {%- set st = states(''sensor.hesc_v3_charge_plan_status'') -%}
+
+              {%- set solo = st.startswith(''EV already charging'') -%}
+
+              <ha-alert alert-type="info">{{ ''EV is already charging by itself (e.g. on solar). The plan watches and does not take over. Need full power now? Start it in your charger app.'' if solo else (''Planned: waiting for the first planned quarter'' if (st.startswith(''Finished'') and q > 0) else st) }}</ha-alert>
+
+
+              <center><b>{{ ''ACTIVE PLAN'' if on else ''PLAN (not active)'' }}</b> · ready by <b>{{ p.deadline_text | default(''–'') }}</b>{{ '' (weekly schedule)'' if p.get(''source'') == ''repeating'' else '' (fixed day per week)'' }}</center>
+
+
+              | CHARGING TIME | ENERGY PRICE |
+
+              |:--|--:|
+
+              | <font size="6" color="#22c55e"><b>{{ ''–'' if solo else (p.charge_time | default(''–'') ~ '' h'') }}</b></font> @ {{ p.kw | default(''–'') }} kW | <font size="6" color="#22c55e"><b>{{ (p.avg_price_ct | string | replace(''.'', state_attr(''sensor.hesc_v3_prices'', ''decimal'') or '','')) ~ '' '' ~ (state_attr(''sensor.hesc_v3_prices'', ''minor'') or ''ct'') ~ ''/kWh'' if (p.avg_price_ct is not none and q > 0 and not solo) else ''–'' }}</b></font> |
+
+
+              | BATTERY NOW | GOAL | STILL NEEDED | STATUS |
+
+              |:--|:--|:--|:--|
+
+              | <font size="4"><b>{{ (p.soc | round(0) | int ~ ''%'') if p.soc is not none else ''?'' }}</b></font> | <font size="4"><b>{{ p.goal | default(''–'') }}%</b></font> | <font size="4"><b>{{ p.need_kwh | default(0) }} kWh</b></font>{{ '' (<ha-icon icon="hesc:zon" style="--mdc-icon-size:16px;vertical-align:-3px;margin-right:4px"></ha-icon>~'' ~ p.solar_kwh ~ '' kWh sun)'' if (p.solar_kwh | default(0)) > 0 else '''' }}{{ '''' if solo else ('' · '' ~ (p.quarters | default(0)) ~ '' × 15 min grid'') }}{{ '' · <ha-icon icon="hesc:waarschuwing" style="--mdc-icon-size:16px;vertical-align:-3px;margin-right:4px"></ha-icon>not enough time left for the goal'' if (on and not solo and (p.short_of_time | default(false))) else '''' }} | <font size="4" color="{{ ''#22c55e'' if on else ''#cbd5e1'' }}"><b>{{ ''<ha-icon icon="hesc:vinkje-cirkel" style="--mdc-icon-size:20px;vertical-align:-4px;margin-right:4px"></ha-icon>already there'' if (p.need_kwh is defined and p.need_kwh == 0 and p.soc is not none) else (''<ha-icon icon="hesc:zon" style="--mdc-icon-size:20px;vertical-align:-4px;margin-right:4px"></ha-icon>charging by itself'' if (on and solo) else ((''<ha-icon icon="hesc:zandloper" style="--mdc-icon-size:20px;vertical-align:-4px;margin-right:4px"></ha-icon>planned'' if on else ''<ha-icon icon="hesc:vergrootglas" style="--mdc-icon-size:20px;vertical-align:-4px;margin-right:4px"></ha-icon>preview'') if p.quarters | default(0) > 0 else ''–'')) }}</b></font> |
+
+              {%- if p.prices_complete is defined and not p.prices_complete %}
+
+
+              <small><ha-icon icon="hesc:info" style="--mdc-icon-size:14px;vertical-align:-2px;margin-right:4px"></ha-icon>Prices known until {{ as_timestamp(p.prices_until) | timestamp_custom(''%a %H:%M'') if p.prices_until else ''–'' }}. Final plan follows when all prices up to departure are known.</small>
+
+              {%- endif %}'
+        - type: custom:hesc-style
+          style:
+            ha-markdown$: 'table { width: 100%; }
+
+              thead { display: none; }
+
+              h2 ha-icon { --mdc-icon-size: 24px; margin-right: 4px; }
+
+              h2 a ha-icon { --mdc-icon-size: 20px; margin-right: 0; vertical-align: 1px; }
+
+              h2 ha-icon[icon="hesc:laadstekker"] { vertical-align: 4px; }'
+            .: 'ha-card { height: 100%; }'
+          card:
+            type: markdown
+            content: '## <ha-icon icon="hesc:laadstekker"></ha-icon> Live Inputs
+
+
+              {% macro w(e) -%}{%- set v = states(e) -%}{{ (v | float | round(0) | int) ~ '' W'' if v | is_number else ''–'' }}{%- endmacro -%}
+
+              {%- set soc = states(''sensor.hesc_v3_ev_battery_level_with_fallbacks'') -%}
+
+              {%- set src = state_attr(''sensor.hesc_v3_ev_battery_level_with_fallbacks'', ''source_name'') -%}
+
+              {%- set est = state_attr(''sensor.hesc_v3_ev_battery_level_with_fallbacks'', ''estimated'') -%}
+
+              {%- set sun = states(''sensor.hesc_v3_solar_still_to_come_today'') -%}
+
+              | | |
+
+              |:--|--:|
+
+              | **Expected charge cost** | [{{ ''no active plan'' if state_attr(''sensor.hesc_v3_expected_charge_cost'', ''ready_by'') == ''no active plan'' else (state_attr(''sensor.hesc_v3_expected_charge_cost'', ''display'') or ''–'') }}](/hesc-v3/costs){{ '' · '' ~ state_attr(''sensor.hesc_v3_expected_charge_cost'', ''grid_kwh'') ~ '' kWh'' if state_attr(''sensor.hesc_v3_expected_charge_cost'', ''grid_kwh'') and not state_attr(''sensor.hesc_v3_expected_charge_cost'', ''ready_by'') == ''no active plan'' }} |
+
+              | **Forecast now** | {{ w(''sensor.hesc_v3_forecast_power_diagnostic'') }} · cautious {{ w(''sensor.hesc_v3_forecast_power_cautious_diagnostic'') }} |
+
+              | **Actual PV** | {{ w(''sensor.hesc_v3_pv_power_diagnostic'') }} |
+
+              | **EV charging power** | {{ w(''sensor.hesc_v3_charging_power_diagnostic'') }} |
+
+              | **EV battery level** | {{ (soc | float | round(0) | int) ~ '' %'' if soc | is_number else ''–'' }}{{ '' (estimated)'' if est }}{{ '' · '' ~ src if src }} |
+
+              {%- if is_state(''switch.hesc_v3_use_local_weather_station'', ''on'') %}
+
+              | **Irradiance** | {{ (states(''sensor.hesc_v3_irradiance_diagnostic'') | float | round(0) | int) ~ '' W/m²'' if states(''sensor.hesc_v3_irradiance_diagnostic'') | is_number else ''–'' }} |
+
+              {%- endif %}
+
+              | **Solar still to come today** | {{ (sun | float | round(1)) ~ '' kWh'' if sun | is_number else ''–'' }} |'
