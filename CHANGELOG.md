@@ -1,6 +1,6 @@
 # Changelog
 
-## 3.0.0 · 25-10-2026
+## 3.0.0 · 22-10-2026 
 
 The first release of HESC as a Home Assistant integration. It can do everything HESC v2 can,
 without Node-RED and without a YAML package. HESC v2 stays available; see

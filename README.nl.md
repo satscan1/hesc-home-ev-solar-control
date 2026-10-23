@@ -1,13 +1,15 @@
-<p align="center"><img src="custom_components/hesc/frontend/hesc-logo.png" width="160" alt="HESC"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/satscan1/hesc-home-ev-solar-control/main/custom_components/hesc/frontend/hesc-logo.png" width="160" alt="HESC"></p>
 
 # HESC — Home EV Solar Control
 
-*English: [README.md](README.md) · Deutsch: [README.de.md](README.de.md)*
+*English: [README.md](https://github.com/satscan1/hesc-home-ev-solar-control/blob/main/README.md) · Deutsch: [README.de.md](https://github.com/satscan1/hesc-home-ev-solar-control/blob/main/README.de.md)*
 
 HESC laadt je elektrische auto zoveel mogelijk met je eigen zonnestroom, en van het net op de
 goedkoopste momenten als de zon niet genoeg is. HESC draait in Home Assistant.
 
-<p align="center"><img src="docs/images/main.png" width="90%" alt="HESC dashboard"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/satscan1/hesc-home-ev-solar-control/main/docs/images/infographic-nl.png" width="100%" alt="HESC v3 in één oogopslag"></p>
+
+<p align="center"><img src="https://raw.githubusercontent.com/satscan1/hesc-home-ev-solar-control/main/docs/images/main.png" width="90%" alt="HESC dashboard"></p>
 
 ## Wat HESC doet
 
@@ -18,7 +20,7 @@ goedkoopste momenten als de zon niet genoeg is. HESC draait in Home Assistant.
 - **Werkt samen met je thuisbatterij.** Als de thuisbatterijen alle zon zouden pakken, geeft HESC
   de auto een kickstart. Zo komt de auto aan de beurt en hoeft hij niet te wachten tot de
   batterijen vol zijn. HESC regelt de thuisbatterij nooit zelf: dit werkt met een batterij die
-  reageert op wat het huis verbruikt (zie [Hoe het werkt](docs/04-how-it-works.nl.md#thuisbatterij-en-auto-kickstart)).
+  reageert op wat het huis verbruikt (zie [Hoe het werkt](https://github.com/satscan1/hesc-home-ev-solar-control/blob/main/docs/04-how-it-works.nl.md#thuisbatterij-en-auto-kickstart)).
 - **Laat zien wat er gebeurt.** Een dashboard met vandaag, de verwachting, kosten en advies, en
   een rapport dat je altijd kunt openen.
 
@@ -41,10 +43,10 @@ HESC v3 is een Home Assistant-integratie. Hij kan alles wat HESC v2 kan, en daar
 - **Eén dag overslaan** in het weekplan (een vrije dag), zonder het plan te veranderen.
 - **Op je telefoon en horloge** (iPhone, Apple Watch, Android, Wear OS): een samenvatting van één
   regel voor een widget, acties voor Siri en Opdrachten, en knoppen voor één tik. Zie
-  [Dashboard](docs/06-dashboard.nl.md#op-je-telefoon-en-horloge).
+  [Dashboard](https://github.com/satscan1/hesc-home-ev-solar-control/blob/main/docs/06-dashboard.nl.md#op-je-telefoon-en-horloge).
 
 HESC v2 blijft beschikbaar. Je kunt v3 naast v2 laten draaien en overstappen als je eraan toe
-bent; zie [Overstappen van v2](docs/02-upgrade-from-v2.nl.md).
+bent; zie [Overstappen van v2](https://github.com/satscan1/hesc-home-ev-solar-control/blob/main/docs/02-upgrade-from-v2.nl.md).
 
 ## Hoe HESC getest wordt
 
@@ -71,19 +73,19 @@ wijziging zo bedoeld is.
 3. Open **HESC** in de zijbalk: het dashboard en de kaarten komen met HESC mee, verder niets te installeren.
 
 HESC begint in **schaduwmodus**: hij kijkt mee en laat zien wat hij zou doen, maar schakelt niets
-tot jij de schaduwmodus uitzet. Stap voor stap: [Installatie](docs/01-installation.nl.md).
+tot jij de schaduwmodus uitzet. Stap voor stap: [Installatie](https://github.com/satscan1/hesc-home-ev-solar-control/blob/main/docs/01-installation.nl.md).
 
 ## Handleiding
 
 | | English | Nederlands | Deutsch |
 |---|---|---|---|
-| Installatie | [01-installation](docs/01-installation.md) | [01-installatie](docs/01-installation.nl.md) | [01-installation](docs/01-installation.de.md) |
-| Overstappen van v2 | [02-upgrade-from-v2](docs/02-upgrade-from-v2.md) | [02-overstappen-van-v2](docs/02-upgrade-from-v2.nl.md) | [02-umstieg-von-v2](docs/02-upgrade-from-v2.de.md) |
-| Instellingen | [03-settings](docs/03-settings.md) | [03-instellingen](docs/03-settings.nl.md) | [03-einstellungen](docs/03-settings.de.md) |
-| Hoe het werkt | [04-how-it-works](docs/04-how-it-works.md) | [04-hoe-het-werkt](docs/04-how-it-works.nl.md) | [04-so-funktioniert-es](docs/04-how-it-works.de.md) |
-| Laadpalen en bronnen | [05-chargers-and-sources](docs/05-chargers-and-sources.md) | [05-laadpalen-en-bronnen](docs/05-chargers-and-sources.nl.md) | [05-wallboxen-und-quellen](docs/05-chargers-and-sources.de.md) |
-| Dashboard | [06-dashboard](docs/06-dashboard.md) | [06-dashboard](docs/06-dashboard.nl.md) | [06-dashboard](docs/06-dashboard.de.md) |
-| Slim laden uitgelegd | [07-smart-charging-explained](docs/07-smart-charging-explained.md) | [07-slim-laden-uitgelegd](docs/07-smart-charging-explained.nl.md) | [07-intelligentes-laden-erklärt](docs/07-smart-charging-explained.de.md) |
-| Een dag met HESC | [08-a-day-with-hesc](docs/08-a-day-with-hesc.md) | [08-een-dag-met-hesc](docs/08-a-day-with-hesc.nl.md) | [08-ein-tag-mit-hesc](docs/08-a-day-with-hesc.de.md) |
-| Problemen oplossen | [09-troubleshooting](docs/09-troubleshooting.md) | [09-problemen-oplossen](docs/09-troubleshooting.nl.md) | [09-fehlerbehebung](docs/09-troubleshooting.de.md) |
+| Installatie | [01-installation](https://github.com/satscan1/hesc-home-ev-solar-control/blob/main/docs/01-installation.md) | [01-installatie](https://github.com/satscan1/hesc-home-ev-solar-control/blob/main/docs/01-installation.nl.md) | [01-installation](https://github.com/satscan1/hesc-home-ev-solar-control/blob/main/docs/01-installation.de.md) |
+| Overstappen van v2 | [02-upgrade-from-v2](https://github.com/satscan1/hesc-home-ev-solar-control/blob/main/docs/02-upgrade-from-v2.md) | [02-overstappen-van-v2](https://github.com/satscan1/hesc-home-ev-solar-control/blob/main/docs/02-upgrade-from-v2.nl.md) | [02-umstieg-von-v2](https://github.com/satscan1/hesc-home-ev-solar-control/blob/main/docs/02-upgrade-from-v2.de.md) |
+| Instellingen | [03-settings](https://github.com/satscan1/hesc-home-ev-solar-control/blob/main/docs/03-settings.md) | [03-instellingen](https://github.com/satscan1/hesc-home-ev-solar-control/blob/main/docs/03-settings.nl.md) | [03-einstellungen](https://github.com/satscan1/hesc-home-ev-solar-control/blob/main/docs/03-settings.de.md) |
+| Hoe het werkt | [04-how-it-works](https://github.com/satscan1/hesc-home-ev-solar-control/blob/main/docs/04-how-it-works.md) | [04-hoe-het-werkt](https://github.com/satscan1/hesc-home-ev-solar-control/blob/main/docs/04-how-it-works.nl.md) | [04-so-funktioniert-es](https://github.com/satscan1/hesc-home-ev-solar-control/blob/main/docs/04-how-it-works.de.md) |
+| Laadpalen en bronnen | [05-chargers-and-sources](https://github.com/satscan1/hesc-home-ev-solar-control/blob/main/docs/05-chargers-and-sources.md) | [05-laadpalen-en-bronnen](https://github.com/satscan1/hesc-home-ev-solar-control/blob/main/docs/05-chargers-and-sources.nl.md) | [05-wallboxen-und-quellen](https://github.com/satscan1/hesc-home-ev-solar-control/blob/main/docs/05-chargers-and-sources.de.md) |
+| Dashboard | [06-dashboard](https://github.com/satscan1/hesc-home-ev-solar-control/blob/main/docs/06-dashboard.md) | [06-dashboard](https://github.com/satscan1/hesc-home-ev-solar-control/blob/main/docs/06-dashboard.nl.md) | [06-dashboard](https://github.com/satscan1/hesc-home-ev-solar-control/blob/main/docs/06-dashboard.de.md) |
+| Slim laden uitgelegd | [07-smart-charging-explained](https://github.com/satscan1/hesc-home-ev-solar-control/blob/main/docs/07-smart-charging-explained.md) | [07-slim-laden-uitgelegd](https://github.com/satscan1/hesc-home-ev-solar-control/blob/main/docs/07-smart-charging-explained.nl.md) | [07-intelligentes-laden-erklärt](https://github.com/satscan1/hesc-home-ev-solar-control/blob/main/docs/07-smart-charging-explained.de.md) |
+| Een dag met HESC | [08-a-day-with-hesc](https://github.com/satscan1/hesc-home-ev-solar-control/blob/main/docs/08-a-day-with-hesc.md) | [08-een-dag-met-hesc](https://github.com/satscan1/hesc-home-ev-solar-control/blob/main/docs/08-a-day-with-hesc.nl.md) | [08-ein-tag-mit-hesc](https://github.com/satscan1/hesc-home-ev-solar-control/blob/main/docs/08-a-day-with-hesc.de.md) |
+| Problemen oplossen | [09-troubleshooting](https://github.com/satscan1/hesc-home-ev-solar-control/blob/main/docs/09-troubleshooting.md) | [09-problemen-oplossen](https://github.com/satscan1/hesc-home-ev-solar-control/blob/main/docs/09-troubleshooting.nl.md) | [09-fehlerbehebung](https://github.com/satscan1/hesc-home-ev-solar-control/blob/main/docs/09-troubleshooting.de.md) |
 
