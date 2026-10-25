@@ -974,7 +974,7 @@ views:
         {% if on %}<center><b>AKTIVER PLAN</b> · fertig um <b>{{ p.deadline_text | default(''–'') | regex_replace(''^Mon '', ''Mo '') | regex_replace(''^Tue '', ''Di '') | regex_replace(''^Wed '', ''Mi '') | regex_replace(''^Thu '', ''Do '') | regex_replace(''^Fri '', ''Fr '') | regex_replace(''^Sat '', ''Sa '') | regex_replace(''^Sun '', ''So '') | regex_replace('' Mar([: ]|$)'', '' Mär\\1'') | regex_replace('' May([: ]|$)'', '' Mai\\1'') | regex_replace('' Oct([: ]|$)'', '' Okt\\1'') | regex_replace('' Dec([: ]|$)'', '' Dez\\1'') }}</b>{{ '' (Wochenplanung)'' if p.get(''source'') == ''repeating'' else '' (fester Tag pro Woche)'' }}</center>
 
 
-        | LADEZEIT | STROMPREIS | ERWARTETE KOSTEN |{{ '' GÜNSTIGE GELEGENHEITEN |'' if cheap_on else '''' }}
+        | LADEZEIT | STROMPREIS | ERW. KOSTEN |{{ '' GÜNSTIG |'' if cheap_on else '''' }}
 
         |:--|--:|--:|{{ ''--:|'' if cheap_on else '''' }}
 
@@ -3605,7 +3605,7 @@ views:
               {% if on %}<center><b>AKTIVER PLAN</b> · fertig um <b>{{ p.deadline_text | default(''–'') | regex_replace(''^Mon '', ''Mo '') | regex_replace(''^Tue '', ''Di '') | regex_replace(''^Wed '', ''Mi '') | regex_replace(''^Thu '', ''Do '') | regex_replace(''^Fri '', ''Fr '') | regex_replace(''^Sat '', ''Sa '') | regex_replace(''^Sun '', ''So '') | regex_replace('' Mar([: ]|$)'', '' Mär\\1'') | regex_replace('' May([: ]|$)'', '' Mai\\1'') | regex_replace('' Oct([: ]|$)'', '' Okt\\1'') | regex_replace('' Dec([: ]|$)'', '' Dez\\1'') }}</b>{{ '' (Wochenplanung)'' if p.get(''source'') == ''repeating'' else '' (fester Tag pro Woche)'' }}</center>
 
 
-              | LADEZEIT | STROMPREIS | ERWARTETE KOSTEN |{{ '' GÜNSTIGE GELEGENHEITEN |'' if cheap_on else '''' }}
+              | LADEZEIT | STROMPREIS | ERW. KOSTEN |{{ '' GÜNSTIG |'' if cheap_on else '''' }}
 
               |:--|--:|--:|{{ ''--:|'' if cheap_on else '''' }}
 

@@ -86,7 +86,7 @@ zonsondergang, en hoeveel uur.
 
 ## Laadplan
 
-![Charge plan](images/charge-plan.png)
+![Charge plan](images/charge-plan.nl.png)
 
 - **Laadplan · één vaste dag per week:** een dag, een tijd en een laaddoel, bijvoorbeeld 100 %
   op vrijdag om 08:00. Komt elke week terug. *Actief* zet hem aan of uit.
@@ -106,9 +106,11 @@ zonsondergang, en hoeveel uur.
   - *Bruikbare accucapaciteit* en *Laadvermogen van het net* — wat je auto echt kan opslaan en wat je
     laadpaal van het net levert.
 - **Planstatus:** wat HESC doet voor welk plan en tot wanneer: laadtijd, gemiddelde
-  energieprijs, accustand nu, doel, wat er nog nodig is en de status.
+  energieprijs, verwachte kosten, accustand nu, doel, wat er nog nodig is en de status. Staan de
+  goedkope kansen aan, dan staat je prijsgrens erbij in paars. Zonder actief plan zegt de kaart alleen
+  *Geen laadplan actief*.
 - **Prijsgrafiek:** de prijs voor vandaag en morgen als vloeiende lijn: lichtgrijs = de prijs,
-  donkergrijs = een verwachte prijs (de echte prijzen van morgen zijn nog niet bekend). Gekleurde
+  gestippeld met een bijna leeg vlak = een verwachte prijs (de echte prijzen van morgen zijn nog niet bekend). Gekleurde
   vlakken onder de lijn laten zien wanneer het loont om de auto aan te sluiten: groen = genoeg
   zon verwacht om op zon te starten (*Zon: starten*), amber = genoeg zon om door te laden, geen
   nieuwe start (*Zon: doorladen*), blauw = gepland netladen (*Netplan*), paars gestreept =

@@ -971,8 +971,10 @@ class HescCoordinator(DataUpdateCoordinator[Inputs]):
             st, attrs = self._apply_charge_now(get, st, attrs)
         self.computed["sensor.hesc_charge_plan"] = {"state": st, "attributes": attrs}
         get = self._getter(self._view())
-        prev = self.computed.get("sensor.hesc_expected_charge_cost", {}).get("state")
-        st, attrs = plan.planned_cost(get, prev)
+        # 3.1.0: v2's "display" showed the previous amount (this.state) and lagged one update behind;
+        # the plan card now shows it next to the price, so it shows the amount just worked out
+        st, _ = plan.planned_cost(get, None)
+        st, attrs = plan.planned_cost(get, st)
         self.computed["sensor.hesc_expected_charge_cost"] = {"state": st, "attributes": attrs}
 
     # ---- since 3.0.0: charge now to a goal (charge_now.py) ----------------------------

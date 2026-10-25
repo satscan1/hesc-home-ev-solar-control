@@ -90,7 +90,7 @@ Sonnenuntergang, und wie viele Stunden.
 
 ## Ladeplan
 
-![Charge plan](images/charge-plan.png)
+![Charge plan](images/charge-plan.de.png)
 
 - **Ladeplan · ein fester Tag pro Woche:** ein Tag, eine Uhrzeit und ein Ladeziel, zum Beispiel
   100 % am Freitag um 08:00. Er kommt jede Woche wieder. *Aktiv* schaltet ihn ein oder aus.
@@ -113,9 +113,11 @@ Sonnenuntergang, und wie viele Stunden.
   - *Nutzbare Akkukapazität* und *Ladeleistung aus dem Netz* — was dein Auto wirklich fasst und was
     deine Wallbox aus dem Netz liefert.
 - **Status Ladeplan:** was HESC für welchen Plan und bis wann tut: Ladezeit, durchschnittlicher
-  Strompreis, Ladestand jetzt, Ziel, was noch nötig ist, und der Status.
-- **Preisgrafik:** der Preis für heute und morgen als glatte Linie: hellgrau = der Preis, dunkelgrau
-  = ein erwarteter Preis (die echten Preise für morgen sind noch nicht bekannt). Farbige Flächen
+  Strompreis, erwartete Kosten, Ladestand jetzt, Ziel, was noch nötig ist, und der Status. Sind die
+  günstigen Gelegenheiten an, steht deine Preisgrenze in Lila daneben. Ohne aktiven Plan sagt die
+  Karte nur *Kein Ladeplan aktiv*.
+- **Preisgrafik:** der Preis für heute und morgen als glatte Linie: hellgrau = der Preis, gestrichelt mit
+  fast leerer Fläche = ein erwarteter Preis (die echten Preise für morgen sind noch nicht bekannt). Farbige Flächen
   unter der Linie zeigen, wann es sich lohnt, das Auto angeschlossen zu haben: grün = genug Sonne
   erwartet, um mit Sonne zu starten (*Sonne: starten*), bernsteinfarben = genug Sonne zum
   Weiterladen, kein neuer Start (*Sonne: weiterladen*), blau = Netzplan, lila gestreift = eine

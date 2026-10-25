@@ -107,9 +107,11 @@ how many hours.
   - *Usable battery capacity* and *Grid charging power* — what your car really holds and what
     your charger delivers from the grid.
 - **Plan status:** what HESC is doing for which plan and until when: charging time, average
-  energy price, battery level now, goal, what is still needed and the status.
+  energy price, expected cost, battery level now, goal, what is still needed and the status. With
+  cheap chances on, your price limit shows in purple. Without an active plan the card only says
+  *No charging plan active*.
 - **Price chart:** the price for today and tomorrow as a smooth line: light grey = the price,
-  dark grey = an expected price (tomorrow's real prices are not known yet). Coloured areas under
+  dashed with an almost empty area = an expected price (tomorrow's real prices are not known yet). Coloured areas under
   the line show when it pays to have the car connected: green = enough sun expected to start
   charging on sun (*Sun: start*), amber = enough sun to keep charging, no new start (*Sun: keep
   charging*), blue = grid plan, purple striped = a cheap chance. When a cheap chance falls in a

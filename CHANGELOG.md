@@ -1,5 +1,14 @@
 # Changelog
 
+## 3.1.1 · 25-10-2026
+
+- The expected cost in the charge plan card shows the right amount at once. Before, it could
+  show the previous amount (for example *€ 0,00*) for one update after a restart or a plan change.
+- German: shorter column titles in the charge plan card (*ERW. KOSTEN*, *GÜNSTIG*), so the card
+  no longer wraps.
+- Manual: new pictures of the charge plan page, now in English, Dutch and German, and the plan
+  card and price chart described as they are since 3.1.0.
+
 ## 3.1.0 · 25-10-2026
 
 **Charge plan card**
