@@ -21,6 +21,7 @@ from homeassistant.util import dt as dt_util
 from .coordinator import HescConfigEntry, HescCoordinator
 from .entity import HescEntity
 from .inputs import Inputs
+from . import texts
 from .phone import summary
 
 
@@ -101,6 +102,12 @@ STATUS_SENSORS: tuple[tuple[str, str], ...] = (
     ("advice_updated", "input_text.hesc_advice_updated"),
     ("report_generated", "input_text.hesc_report_generated"),
 )
+
+# 3.1.0: status texts people read; they get the attributes `nl` and `de` (texts.py)
+TRANSLATED = frozenset({
+    "input_text.hesc_state", "input_text.hesc_reason", "input_text.hesc_last_action", "input_text.hesc_plan_status",
+    "input_text.hesc_kick_status", "input_text.hesc_current_status",
+})
 
 # Sensors v2 made with templates or Node-RED that v3 computes itself.
 # key, v2 entity it replaces
@@ -219,7 +226,10 @@ class ComputedSensor(HescEntity, SensorEntity):
         st = self.coordinator.computed.get(self._v2_id)
         if st is None:
             return None
-        return {k: v for k, v in st["attributes"].items() if k not in ("friendly_name", "icon", "unit_of_measurement")}
+        out = {k: v for k, v in st["attributes"].items() if k not in ("friendly_name", "icon", "unit_of_measurement")}
+        if self._key == "notice":  # 3.1.0: the notice line in Dutch and German too
+            out.update(texts.translated(st["state"] if st["state"] != "none" else None))
+        return out
 
 
 class StatusSensor(HescEntity, RestoreEntity, SensorEntity):
@@ -245,10 +255,14 @@ class StatusSensor(HescEntity, RestoreEntity, SensorEntity):
 
     @property
     def extra_state_attributes(self) -> dict[str, Any] | None:
-        if self._helper != "input_text.hesc_state":
-            return None
-        ctx = self.coordinator.context or {}
-        return {"release_state": ctx.get("state")}
+        out: dict[str, Any] = {}
+        if self._helper == "input_text.hesc_state":
+            ctx = self.coordinator.context or {}
+            out["release_state"] = ctx.get("state")
+        if self._helper in TRANSLATED:
+            # 3.1.0: the same text in Dutch and German for the dashboard in that language
+            out.update(texts.translated(self.native_value))
+        return out or None
 
 
 class HescSensor(HescEntity, SensorEntity):
@@ -279,7 +293,8 @@ class SummarySensor(HescEntity, SensorEntity):
 
     @property
     def native_value(self) -> str | None:
-        return self._calc()[0]
+        # 3.1.0: a phone widget shows this line as it is, so it comes in Home Assistant's language
+        return texts.translate(self._calc()[0], self.hass.config.language if self.hass else None)
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:

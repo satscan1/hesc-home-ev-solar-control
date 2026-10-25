@@ -83,8 +83,8 @@ Say you plug in at 18:00 with the car at 40 %, and your weekly plan says *80 % a
 3. **How long does that take from the grid?** At 11 kW: a bit over 2 hours, so 9 quarters.
 4. **Which 9 quarters?** The cheapest ones between now and 07:30. Usually somewhere in the night.
 
-The planned quarters show in **amber** in the price chart on the *Charge plan* tab. When the plan
-is not active, the chart shows what it *would* do, marked *preview*.
+The planned quarters show in **amber** in the price chart on the *Charge plan* tab. When no plan
+is active, the chart shows no planned quarters and the plan card says *No charging plan active*.
 
 ## Cheap chances and the sun
 

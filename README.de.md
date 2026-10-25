@@ -1,5 +1,7 @@
 <p align="center"><img src="https://raw.githubusercontent.com/satscan1/hesc-home-ev-solar-control/main/custom_components/hesc/frontend/hesc-logo.png" width="160" alt="HESC"></p>
 
+<p align="center"><a href="https://github.com/satscan1/hesc-home-ev-solar-control/releases"><img src="https://img.shields.io/github/v/release/satscan1/hesc-home-ev-solar-control" alt="Release"></a> <a href="https://hacs.xyz"><img src="https://img.shields.io/badge/HACS-Custom-orange" alt="HACS"></a> <a href="https://github.com/satscan1/hesc-home-ev-solar-control"><img src="https://img.shields.io/github/stars/satscan1/hesc-home-ev-solar-control?style=flat&logo=github" alt="Stars"></a> <a href="https://ko-fi.com/satscan"><img src="https://img.shields.io/badge/Ko--fi-satscan-FF5E5B?logo=kofi&logoColor=white" alt="Support me on Ko-fi"></a></p>
+
 # HESC — Home EV Solar Control
 
 *English: [README.md](https://github.com/satscan1/hesc-home-ev-solar-control/blob/main/README.md) · Nederlands: [README.nl.md](https://github.com/satscan1/hesc-home-ev-solar-control/blob/main/README.nl.md)*
@@ -92,3 +94,11 @@ bis du den Schattenmodus ausschaltest. Schritt für Schritt: [Installation](http
 | Ein Tag mit HESC | [08-a-day-with-hesc](https://github.com/satscan1/hesc-home-ev-solar-control/blob/main/docs/08-a-day-with-hesc.md) | [08-ein-tag-mit-hesc](https://github.com/satscan1/hesc-home-ev-solar-control/blob/main/docs/08-a-day-with-hesc.de.md) |
 | Fehlerbehebung | [09-troubleshooting](https://github.com/satscan1/hesc-home-ev-solar-control/blob/main/docs/09-troubleshooting.md) | [09-fehlerbehebung](https://github.com/satscan1/hesc-home-ev-solar-control/blob/main/docs/09-troubleshooting.de.md) |
 
+
+## Projekt unterstützen
+
+Findest du das Tool nützlich? Gib ihm einen ⭐ auf GitHub, damit andere es auch finden.
+
+Möchtest du noch etwas mehr tun? Unterstütze mich über Ko-fi:
+
+<a href="https://ko-fi.com/satscan"><img src="https://img.shields.io/badge/Ko--fi-satscan-FF5E5B?logo=kofi&logoColor=white" alt="Support me on Ko-fi"></a>

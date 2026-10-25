@@ -64,6 +64,7 @@ from . import (
     prices,
     report,
     settings_backup,
+    texts,
 )
 from .const import (
     CONF_CHARGER_CURRENT,
@@ -860,6 +861,11 @@ class HescCoordinator(DataUpdateCoordinator[Inputs]):
         if dom == "persistent_notification" and data.get("notification_id") == "hesc_charge_plan":
             # v2 in shadow mode still writes its own: v3 gets its own id
             data["notification_id"] = "hesc_v3_charge_plan"
+        if dom in ("notify", "persistent_notification"):
+            # 3.1.0: what a person reads comes in Home Assistant's language (the logic stays English)
+            for k in ("title", "message"):
+                if isinstance(data.get(k), str):
+                    data[k] = texts.translate(data[k], self.hass.config.language)
         if target is not None and (not isinstance(target, dict) or set(target) - {"entity_id"}):
             _LOGGER.warning("HESC v3 skipped %s.%s: target %s is not a list of entities", dom, svc, target)
             return
@@ -1244,13 +1250,17 @@ class HescCoordinator(DataUpdateCoordinator[Inputs]):
         targets = [x.strip() for x in str(self.plan.get("notify_services") or "").split(",")]
         targets = [x for x in targets if x.startswith("notify.")]
         if not targets:
+            lang = self.hass.config.language
             await self.hass.services.async_call("persistent_notification", "create", {
-                "title": "HESC test", "message": "No phone chosen yet: HESC notifications only appear inside Home Assistant."})
+                "title": texts.translate("HESC test", lang),
+                "message": texts.translate("No phone chosen yet: HESC notifications only appear inside Home Assistant.", lang)})
             return
         for t in targets:
             try:
+                lang = self.hass.config.language
                 await self.hass.services.async_call("notify", t.split(".", 1)[1], {
-                    "title": "HESC test", "message": "This phone gets the notifications from Home EV Solar Control."})
+                    "title": texts.translate("HESC test", lang),
+                    "message": texts.translate("This phone gets the notifications from Home EV Solar Control.", lang)})
             except Exception as err:  # noqa: BLE001 - continue_on_error, like v2
                 _LOGGER.warning("HESC v3 test notification to %s failed: %s", t, err)
 

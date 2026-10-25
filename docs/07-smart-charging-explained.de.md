@@ -87,7 +87,7 @@ Angenommen, du steckst um 18:00 an, das Auto steht bei 40 %, und dein Wochenplan
    Nacht.
 
 Die geplanten Viertelstunden erscheinen **bernsteinfarben** in der Preisgrafik auf der Seite
-*Ladeplan*. Ist der Plan nicht aktiv, zeigt die Grafik, was er tun *würde*, markiert als *Vorschau*.
+*Ladeplan*. Ist kein Plan aktiv, zeigt die Grafik keine geplanten Viertelstunden, und die Plankarte sagt *Kein Ladeplan aktiv*.
 
 ## Günstige Gelegenheiten und die Sonne
 

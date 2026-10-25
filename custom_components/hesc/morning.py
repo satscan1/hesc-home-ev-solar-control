@@ -155,12 +155,11 @@ def summary(S: dict[str, Any], history: str, now: int) -> tuple[list[str], str |
         plan = json.loads(p) if isinstance(p, str) else p
     except ValueError:
         pass
-    if isinstance(plan, dict) and _truthy(plan.get("deadline_text")):
+    # 3.1.0: a plan that is off shows nothing of its old ready-by time and goal
+    if isinstance(plan, dict) and _truthy(plan.get("deadline_text")) and _truthy(plan.get("active")):
         line = "Plan " + _s(plan["deadline_text"]) + " → " + _s(plan.get("goal", UNDEFINED)) + " %"
         need, grid = plan.get("need_kwh"), plan.get("grid_kwh_needed")
-        if not _truthy(plan.get("active")):
-            line += " (off)"
-        elif isinstance(need, (int, float)) and not isinstance(need, bool) and need > 0:
+        if isinstance(need, (int, float)) and not isinstance(need, bool) and need > 0:
             line += " · needs " + n1(need) + " kWh" + (", " + n1(grid) + " from grid"
                                                       if isinstance(grid, (int, float)) and not isinstance(grid, bool) and grid > 0 else ", all from sun")
         else:

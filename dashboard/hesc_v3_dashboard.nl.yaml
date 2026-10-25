@@ -17,6 +17,7 @@ views:
     - condition: state
       entity: binary_sensor.hesc_v3_configuration_valid
       state: 'on'
+    state_content: nl
   - type: entity
     entity: binary_sensor.hesc_v3_ev_connected_diagnostic
     name: Auto
@@ -283,11 +284,11 @@ views:
 
           |:--|:--|
 
-          | **Toestand** | {{ st.replace(''[shadow] '', '''') }}{{ '' · '' ~ rs if rs not in ['''', ''unknown'', ''unavailable''] }}{{ '' · schaduw'' if st.startswith(''[shadow]'') }} |
+          | **Toestand** | {{ (state_attr(''sensor.hesc_v3_state'', ''nl'') or st).replace(''[schaduw] '', '''').replace(''[shadow] '', '''') }}{{ '' · '' ~ (state_attr(''sensor.hesc_v3_reason'', ''nl'') or rs) if rs not in ['''', ''unknown'', ''unavailable''] }}{{ '' · schaduw'' if st.startswith(''[shadow]'') }} |
 
           {%- if la not in ['''', ''unknown'', ''unavailable''] and la_h <= 36 %}
 
-          | **Laatste actie** | {{ la_day }}{{ la }} |
+          | **Laatste actie** | {{ la_day }}{{ state_attr(''sensor.hesc_v3_last_action'', ''nl'') or la }} |
 
           {%- endif %}
 
@@ -545,7 +546,8 @@ views:
               entity: sensor.hesc_v3_home_battery_and_ev_status
               name: Thuisbatterij en auto
               icon: mdi:battery-arrow-up-outline
-              type: simple-entity
+              type: attribute
+              attribute: nl
           icon: hesc:monitor-grafiek
       - type: custom:hesc-style
         style: 'ha-card { border-top-left-radius: 0; border-top-right-radius: 0; border-top: none; margin-top: calc(-1 * var(--vertical-stack-card-gap, 8px)); }'
@@ -651,7 +653,7 @@ views:
 
           {%- set c = ''#ef4444'' if p == 1 else (''#fbbf24'' if p == 2 else ''#94a3b8'') -%}
 
-          <a href="{{ state_attr(''sensor.hesc_v3_notice'', ''link'') or ''/hesc-v3/settings'' }}"><font color="{{ c }}">{{ ''<ha-icon icon="hesc:kruis-cirkel" style="--mdc-icon-size:16px;vertical-align:-3px;margin-right:4px"></ha-icon>'' if p == 1 else (''<ha-icon icon="hesc:waarschuwing" style="--mdc-icon-size:16px;vertical-align:-3px;margin-right:4px"></ha-icon>'' if p == 2 else ''<ha-icon icon="hesc:info" style="--mdc-icon-size:16px;vertical-align:-3px;margin-right:4px"></ha-icon>'') }} P{{ p }} · {{ n }}{{ ('' · '' ~ (as_timestamp(state_attr(''sensor.hesc_v3_notice'', ''since'')) | timestamp_custom(''%H:%M''))) if state_attr(''sensor.hesc_v3_notice'', ''since'') else '''' }} ›</font></a>
+          <a href="{{ state_attr(''sensor.hesc_v3_notice'', ''link'') or ''/hesc-v3/settings'' }}"><font color="{{ c }}">{{ ''<ha-icon icon="hesc:kruis-cirkel" style="--mdc-icon-size:16px;vertical-align:-3px;margin-right:4px"></ha-icon>'' if p == 1 else (''<ha-icon icon="hesc:waarschuwing" style="--mdc-icon-size:16px;vertical-align:-3px;margin-right:4px"></ha-icon>'' if p == 2 else ''<ha-icon icon="hesc:info" style="--mdc-icon-size:16px;vertical-align:-3px;margin-right:4px"></ha-icon>'') }} P{{ p }} · {{ state_attr(''sensor.hesc_v3_notice'', ''nl'') or n }}{{ ('' · '' ~ (as_timestamp(state_attr(''sensor.hesc_v3_notice'', ''since'')) | timestamp_custom(''%H:%M''))) if state_attr(''sensor.hesc_v3_notice'', ''since'') else '''' }} ›</font></a>
 
           {%- else -%}
 
@@ -956,7 +958,7 @@ views:
     column_span: 3
     cards:
     - type: markdown
-      content: '{%- set r = state_attr(''sensor.hesc_v3_charge_plan'', ''plan'') -%}{%- set p = r if r is mapping else (r | from_json if r else {}) -%}
+      content: '{%- set cheap_on = is_state(''switch.hesc_v3_charge_plan_take_cheap_chances'', ''on'') -%}{%- set r = state_attr(''sensor.hesc_v3_charge_plan'', ''plan'') -%}{%- set p = r if r is mapping else (r | from_json if r else {}) -%}
 
         {%- set on = p.active | default(false) -%}
 
@@ -966,31 +968,34 @@ views:
 
         {%- set solo = st.startswith(''EV already charging'') -%}
 
-        <ha-alert alert-type="info">{{ ''De auto laadt al uit zichzelf (bijv. op zon). Het plan kijkt mee en neemt het niet over. Nu vol vermogen nodig? Start het in de app van je laadpaal.'' if solo else (''Gepland: wacht op het eerste geplande kwartier'' if (st.startswith(''Finished'') and q > 0) else st) }}</ha-alert>
+        {% if on or st != ''No active plan'' %}<ha-alert alert-type="info">{{ ''De auto laadt al uit zichzelf (bijv. op zon). Het plan kijkt mee en neemt het niet over. Nu vol vermogen nodig? Start het in de app van je laadpaal.'' if solo else (''Gepland: wacht op het eerste geplande kwartier'' if (st.startswith(''Finished'') and q > 0) else (state_attr(''sensor.hesc_v3_charge_plan_status'', ''nl'') or st)) }}</ha-alert>{% endif %}
 
 
-        <center><b>{{ ''ACTIEF PLAN'' if on else ''PLAN (niet actief)'' }}</b> · klaar op <b>{{ p.deadline_text | default(''–'') | regex_replace(''^Mon '', ''ma '') | regex_replace(''^Tue '', ''di '') | regex_replace(''^Wed '', ''wo '') | regex_replace(''^Thu '', ''do '') | regex_replace(''^Fri '', ''vr '') | regex_replace(''^Sat '', ''za '') | regex_replace(''^Sun '', ''zo '') | regex_replace('' Jan([: ]|$)'', '' jan\\1'') | regex_replace('' Feb([: ]|$)'', '' feb\\1'') | regex_replace('' Mar([: ]|$)'', '' mrt\\1'') | regex_replace('' Apr([: ]|$)'', '' apr\\1'') | regex_replace('' May([: ]|$)'', '' mei\\1'') | regex_replace('' Jun([: ]|$)'', '' jun\\1'') | regex_replace('' Jul([: ]|$)'', '' jul\\1'') | regex_replace('' Aug([: ]|$)'', '' aug\\1'') | regex_replace('' Sep([: ]|$)'', '' sep\\1'') | regex_replace('' Oct([: ]|$)'', '' okt\\1'') | regex_replace('' Nov([: ]|$)'', '' nov\\1'') | regex_replace('' Dec([: ]|$)'', '' dec\\1'') }}</b>{{ '' (weekplanning)'' if p.get(''source'') == ''repeating'' else '' (vaste dag per week)'' }}</center>
+        {% if on %}<center><b>ACTIEF PLAN</b> · klaar op <b>{{ p.deadline_text | default(''–'') | regex_replace(''^Mon '', ''ma '') | regex_replace(''^Tue '', ''di '') | regex_replace(''^Wed '', ''wo '') | regex_replace(''^Thu '', ''do '') | regex_replace(''^Fri '', ''vr '') | regex_replace(''^Sat '', ''za '') | regex_replace(''^Sun '', ''zo '') | regex_replace('' Jan([: ]|$)'', '' jan\\1'') | regex_replace('' Feb([: ]|$)'', '' feb\\1'') | regex_replace('' Mar([: ]|$)'', '' mrt\\1'') | regex_replace('' Apr([: ]|$)'', '' apr\\1'') | regex_replace('' May([: ]|$)'', '' mei\\1'') | regex_replace('' Jun([: ]|$)'', '' jun\\1'') | regex_replace('' Jul([: ]|$)'', '' jul\\1'') | regex_replace('' Aug([: ]|$)'', '' aug\\1'') | regex_replace('' Sep([: ]|$)'', '' sep\\1'') | regex_replace('' Oct([: ]|$)'', '' okt\\1'') | regex_replace('' Nov([: ]|$)'', '' nov\\1'') | regex_replace('' Dec([: ]|$)'', '' dec\\1'') }}</b>{{ '' (weekplanning)'' if p.get(''source'') == ''repeating'' else '' (vaste dag per week)'' }}</center>
 
 
-        | LAADTIJD | ENERGIEPRIJS |
+        | LAADTIJD | ENERGIEPRIJS | VERWACHTE KOSTEN |{{ '' GOEDKOPE KANSEN |'' if cheap_on else '''' }}
 
-        |:--|--:|
+        |:--|--:|--:|{{ ''--:|'' if cheap_on else '''' }}
 
-        | <font size="6" color="#22c55e"><b>{{ ''–'' if solo else (p.charge_time | default(''–'') ~ '' h'') }}</b></font> @ {{ (p.kw | default(''–'') | string).replace(''.'', '','') }} kW | <font size="6" color="#22c55e"><b>{{ (p.avg_price_ct | string | replace(''.'', state_attr(''sensor.hesc_v3_prices'', ''decimal'') or '','')) ~ '' '' ~ (state_attr(''sensor.hesc_v3_prices'', ''minor'') or ''ct'') ~ ''/kWh'' if (p.avg_price_ct is not none and q > 0 and not solo) else ''–'' }}</b></font> |
+        | <font size="6" color="#22c55e"><b>{{ ''–'' if solo else (p.charge_time | default(''–'') ~ '' h'') }}</b></font> @ {{ (p.kw | default(''–'') | string).replace(''.'', '','') }} kW | <font size="6" color="#22c55e"><b>{{ (p.avg_price_ct | string | replace(''.'', state_attr(''sensor.hesc_v3_prices'', ''decimal'') or '','')) ~ '' '' ~ (state_attr(''sensor.hesc_v3_prices'', ''minor'') or ''ct'') ~ ''/kWh'' if (p.avg_price_ct is not none and q > 0 and not solo) else ''–'' }}</b></font> | <font size="6" color="#22c55e"><b>{{ (state_attr(''sensor.hesc_v3_expected_charge_cost'', ''display'') or ''–'') if (q > 0 and not solo) else ''–'' }}</b></font> |{{ ('' <font size="5" color="#a855f7"><b>≤ '' ~ (((states(''number.hesc_v3_charge_plan_opportunity_price'') | float(0) * 100) | round(1) | string).replace(''.'', '','') | string | replace(''.'', state_attr(''sensor.hesc_v3_prices'', ''decimal'') or '','')) ~ '' '' ~ (state_attr(''sensor.hesc_v3_prices'', ''minor'') or ''ct'') ~ ''/kWh</b></font> |'') if cheap_on else '''' }}
 
 
         | ACCU NU | DOEL | NOG NODIG | STATUS |
 
         |:--|:--|:--|:--|
 
-        | <font size="4"><b>{{ (p.soc | round(0) | int ~ ''%'') if p.soc is not none else ''?'' }}</b></font> | <font size="4"><b>{{ p.goal | default(''–'') }}%</b></font> | <font size="4"><b>{{ (p.need_kwh | default(0) | string).replace(''.'', '','') }} kWh</b></font>{{ '' (<ha-icon icon="hesc:zon" style="--mdc-icon-size:16px;vertical-align:-3px;margin-right:4px"></ha-icon>~'' ~ (p.solar_kwh | string).replace(''.'', '','') ~ '' kWh zon)'' if (p.solar_kwh | default(0)) > 0 else '''' }}{{ '''' if solo else ('' · '' ~ (p.quarters | default(0)) ~ '' × 15 min net'') }}{{ '' · <ha-icon icon="hesc:waarschuwing" style="--mdc-icon-size:16px;vertical-align:-3px;margin-right:4px"></ha-icon>niet genoeg tijd meer voor het doel'' if (on and not solo and (p.short_of_time | default(false))) else '''' }} | <font size="4" color="{{ ''#22c55e'' if on else ''#cbd5e1'' }}"><b>{{ ''<ha-icon icon="hesc:vinkje-cirkel" style="--mdc-icon-size:20px;vertical-align:-4px;margin-right:4px"></ha-icon>al bereikt'' if (p.need_kwh is defined and p.need_kwh == 0 and p.soc is not none) else (''<ha-icon icon="hesc:zon" style="--mdc-icon-size:20px;vertical-align:-4px;margin-right:4px"></ha-icon>laadt uit zichzelf'' if (on and solo) else ((''<ha-icon icon="hesc:zandloper" style="--mdc-icon-size:20px;vertical-align:-4px;margin-right:4px"></ha-icon>gepland'' if on else ''<ha-icon icon="hesc:vergrootglas" style="--mdc-icon-size:20px;vertical-align:-4px;margin-right:4px"></ha-icon>voorbeeld'') if p.quarters | default(0) > 0 else ''–'')) }}</b></font> |
+        | <font size="4"><b>{{ (p.soc | round(0) | int ~ ''%'') if p.soc is not none else ''?'' }}</b></font> | <font size="4"><b>{{ p.goal | default(''–'') }}%</b></font> | <font size="4"><b>{{ (p.need_kwh | default(0) | string).replace(''.'', '','') }} kWh</b></font>{{ '' (<ha-icon icon="hesc:zon" style="--mdc-icon-size:16px;vertical-align:-3px;margin-right:4px"></ha-icon>~'' ~ (p.solar_kwh | string).replace(''.'', '','') ~ '' kWh zon)'' if (p.solar_kwh | default(0)) > 0 else '''' }}{{ '''' if solo else ('' · '' ~ (p.quarters | default(0)) ~ '' × 15 min net'') }}{{ '' · <ha-icon icon="hesc:waarschuwing" style="--mdc-icon-size:16px;vertical-align:-3px;margin-right:4px"></ha-icon>niet genoeg tijd meer voor het doel'' if (on and not solo and (p.short_of_time | default(false))) else '''' }} | <font size="4" color="{{ ''#22c55e'' if on else ''#cbd5e1'' }}"><b>{{ ''<ha-icon icon="hesc:vinkje-cirkel" style="--mdc-icon-size:20px;vertical-align:-4px;margin-right:4px"></ha-icon>al bereikt'' if (p.need_kwh is defined and p.need_kwh == 0 and p.soc is not none) else (''<ha-icon icon="hesc:zon" style="--mdc-icon-size:20px;vertical-align:-4px;margin-right:4px"></ha-icon>laadt uit zichzelf'' if (on and solo) else (''<ha-icon icon="hesc:zandloper" style="--mdc-icon-size:20px;vertical-align:-4px;margin-right:4px"></ha-icon>gepland'' if p.quarters | default(0) > 0 else ''–'')) }}</b></font> |
 
         {%- if p.prices_complete is defined and not p.prices_complete %}
 
 
         <small><ha-icon icon="hesc:info" style="--mdc-icon-size:14px;vertical-align:-2px;margin-right:4px"></ha-icon>Prijzen bekend tot {{ ([''ma'', ''di'', ''wo'', ''do'', ''vr'', ''za'', ''zo''][(as_timestamp(p.prices_until) | timestamp_custom(''%w'') | int + 6) % 7] ~ '' '' ~ (as_timestamp(p.prices_until) | timestamp_custom(''%H:%M''))) if p.prices_until else ''–'' }}. Het definitieve plan volgt als alle prijzen tot vertrek bekend zijn.</small>
 
-        {%- endif %}'
+        {%- endif %}{% else %}
+
+
+        <center><b>Geen laadplan actief</b></center>{% endif %}'
       grid_options:
         columns: 18
         rows: auto
@@ -1289,7 +1294,7 @@ views:
 
         {%- endif %}
 
-        **Nu:** {{ states(''sensor.hesc_v3_state'') }} · {{ states(''sensor.hesc_v3_charge_plan_status'') }}{{ '' · '' ~ states(''sensor.hesc_v3_home_battery_and_ev_status'') if kick and states(''sensor.hesc_v3_home_battery_and_ev_status'') not in [states(''sensor.hesc_v3_charge_plan_status''), ''Off'', ''Waiting''] else '''' }}
+        **Nu:** {{ (state_attr(''sensor.hesc_v3_state'', ''nl'') or states(''sensor.hesc_v3_state'')) }} · {{ state_attr(''sensor.hesc_v3_charge_plan_status'', ''nl'') or states(''sensor.hesc_v3_charge_plan_status'') }}{{ '' · '' ~ (state_attr(''sensor.hesc_v3_home_battery_and_ev_status'', ''nl'') or states(''sensor.hesc_v3_home_battery_and_ev_status'')) if kick and states(''sensor.hesc_v3_home_battery_and_ev_status'') not in [states(''sensor.hesc_v3_charge_plan_status''), ''Off'', ''Waiting''] else '''' }}
 
         '
     - type: vertical-stack
@@ -2201,7 +2206,7 @@ views:
         4. **Which 9 quarters?** The cheapest ones between now and 07:30. Usually somewhere in the night.
 
 
-        The planned quarters show up in **amber** in the price chart on the *Charge plan* tab. When the plan is not active, the chart shows what it *would* do, marked *preview*.'
+        The planned quarters show up in **amber** in the price chart on the *Charge plan* tab. When no plan is active, the chart shows no planned quarters and the plan card says *No charging plan active*.'
       grid_options:
         columns: full
     - type: markdown
@@ -2538,7 +2543,7 @@ views:
         4. **Welke 9 kwartieren?** De goedkoopste tussen nu en 07:30. Meestal ergens in de nacht.
 
 
-        De geplande kwartieren zie je **oranje** in de prijsgrafiek op het tabblad *Laadplan*. Staat het plan niet aan, dan laat de grafiek zien wat het *zou* doen, met het woord *voorbeeld*.'
+        De geplande kwartieren zie je **oranje** in de prijsgrafiek op het tabblad *Laadplan*. Staat er geen plan aan, dan toont de grafiek geen geplande kwartieren en zegt de plankaart *Geen laadplan actief*.'
       grid_options:
         columns: full
     - type: markdown
@@ -2874,7 +2879,7 @@ views:
         4. **Welche 9 Viertelstunden?** Die günstigsten zwischen jetzt und 07:30. Meist irgendwo in der Nacht.
 
 
-        Die geplanten Viertelstunden erscheinen **bernsteinfarben** in der Preisgrafik auf der Seite *Ladeplan*. Ist der Plan nicht aktiv, zeigt die Grafik, was er tun *würde*, markiert als *Vorschau*.'
+        Die geplanten Viertelstunden erscheinen **bernsteinfarben** in der Preisgrafik auf der Seite *Ladeplan*. Ist kein Plan aktiv, zeigt die Grafik keine geplanten Viertelstunden, und die Plankarte sagt *Kein Ladeplan aktiv*.'
       grid_options:
         columns: full
     - type: markdown
@@ -3553,10 +3558,10 @@ views:
               <font size="5">{{ ''<ha-icon icon="hesc:vinkje-cirkel" style="--mdc-icon-size:28px;vertical-align:-7px;margin-right:8px;color:#22c55e"></ha-icon>Invoer in orde'' if inputs_ok else ''<ha-icon icon="hesc:waarschuwing" style="--mdc-icon-size:28px;vertical-align:-7px;margin-right:8px;color:#fbbf24"></ha-icon>Invoer ontbreekt'' }}</font>
 
 
-              <font size="5">{{ ''<ha-icon icon="hesc:vinkje-cirkel" style="--mdc-icon-size:28px;vertical-align:-7px;margin-right:8px;color:#22c55e"></ha-icon>Geen meldingen'' if n in [''none'', ''unknown'', ''unavailable'', ''''] else ((''<ha-icon icon="hesc:kruis-cirkel" style="--mdc-icon-size:28px;vertical-align:-7px;margin-right:8px;color:#ef4444"></ha-icon>'' if p == 1 else ''<ha-icon icon="hesc:waarschuwing" style="--mdc-icon-size:28px;vertical-align:-7px;margin-right:8px;color:#fbbf24"></ha-icon>'') ~ n) }}</font>
+              <font size="5">{{ ''<ha-icon icon="hesc:vinkje-cirkel" style="--mdc-icon-size:28px;vertical-align:-7px;margin-right:8px;color:#22c55e"></ha-icon>Geen meldingen'' if n in [''none'', ''unknown'', ''unavailable'', ''''] else ((''<ha-icon icon="hesc:kruis-cirkel" style="--mdc-icon-size:28px;vertical-align:-7px;margin-right:8px;color:#ef4444"></ha-icon>'' if p == 1 else ''<ha-icon icon="hesc:waarschuwing" style="--mdc-icon-size:28px;vertical-align:-7px;margin-right:8px;color:#fbbf24"></ha-icon>'') ~ (state_attr(''sensor.hesc_v3_notice'', ''nl'') or n)) }}</font>
 
 
-              Nu: **{{ states(''sensor.hesc_v3_state'') }}** · auto **{{ states(''sensor.hesc_v3_ev_battery_level_with_fallbacks'') }} %**'
+              Nu: **{{ state_attr(''sensor.hesc_v3_state'', ''nl'') or states(''sensor.hesc_v3_state'') }}** · auto **{{ states(''sensor.hesc_v3_ev_battery_level_with_fallbacks'') }} %**'
     - type: custom:hesc-style
       style:
         ha-markdown$: 'h2 ha-icon { --mdc-icon-size: 24px; margin-right: 4px; }
@@ -3584,7 +3589,7 @@ views:
             rows: auto
           card:
             type: markdown
-            content: '{%- set r = state_attr(''sensor.hesc_v3_charge_plan'', ''plan'') -%}{%- set p = r if r is mapping else (r | from_json if r else {}) -%}
+            content: '{%- set cheap_on = is_state(''switch.hesc_v3_charge_plan_take_cheap_chances'', ''on'') -%}{%- set r = state_attr(''sensor.hesc_v3_charge_plan'', ''plan'') -%}{%- set p = r if r is mapping else (r | from_json if r else {}) -%}
 
               {%- set on = p.active | default(false) -%}
 
@@ -3594,31 +3599,34 @@ views:
 
               {%- set solo = st.startswith(''EV already charging'') -%}
 
-              <ha-alert alert-type="info">{{ ''De auto laadt al uit zichzelf (bijv. op zon). Het plan kijkt mee en neemt het niet over. Nu vol vermogen nodig? Start het in de app van je laadpaal.'' if solo else (''Gepland: wacht op het eerste geplande kwartier'' if (st.startswith(''Finished'') and q > 0) else st) }}</ha-alert>
+              {% if on or st != ''No active plan'' %}<ha-alert alert-type="info">{{ ''De auto laadt al uit zichzelf (bijv. op zon). Het plan kijkt mee en neemt het niet over. Nu vol vermogen nodig? Start het in de app van je laadpaal.'' if solo else (''Gepland: wacht op het eerste geplande kwartier'' if (st.startswith(''Finished'') and q > 0) else (state_attr(''sensor.hesc_v3_charge_plan_status'', ''nl'') or st)) }}</ha-alert>{% endif %}
 
 
-              <center><b>{{ ''ACTIEF PLAN'' if on else ''PLAN (niet actief)'' }}</b> · klaar op <b>{{ p.deadline_text | default(''–'') | regex_replace(''^Mon '', ''ma '') | regex_replace(''^Tue '', ''di '') | regex_replace(''^Wed '', ''wo '') | regex_replace(''^Thu '', ''do '') | regex_replace(''^Fri '', ''vr '') | regex_replace(''^Sat '', ''za '') | regex_replace(''^Sun '', ''zo '') | regex_replace('' Jan([: ]|$)'', '' jan\\1'') | regex_replace('' Feb([: ]|$)'', '' feb\\1'') | regex_replace('' Mar([: ]|$)'', '' mrt\\1'') | regex_replace('' Apr([: ]|$)'', '' apr\\1'') | regex_replace('' May([: ]|$)'', '' mei\\1'') | regex_replace('' Jun([: ]|$)'', '' jun\\1'') | regex_replace('' Jul([: ]|$)'', '' jul\\1'') | regex_replace('' Aug([: ]|$)'', '' aug\\1'') | regex_replace('' Sep([: ]|$)'', '' sep\\1'') | regex_replace('' Oct([: ]|$)'', '' okt\\1'') | regex_replace('' Nov([: ]|$)'', '' nov\\1'') | regex_replace('' Dec([: ]|$)'', '' dec\\1'') }}</b>{{ '' (weekplanning)'' if p.get(''source'') == ''repeating'' else '' (vaste dag per week)'' }}</center>
+              {% if on %}<center><b>ACTIEF PLAN</b> · klaar op <b>{{ p.deadline_text | default(''–'') | regex_replace(''^Mon '', ''ma '') | regex_replace(''^Tue '', ''di '') | regex_replace(''^Wed '', ''wo '') | regex_replace(''^Thu '', ''do '') | regex_replace(''^Fri '', ''vr '') | regex_replace(''^Sat '', ''za '') | regex_replace(''^Sun '', ''zo '') | regex_replace('' Jan([: ]|$)'', '' jan\\1'') | regex_replace('' Feb([: ]|$)'', '' feb\\1'') | regex_replace('' Mar([: ]|$)'', '' mrt\\1'') | regex_replace('' Apr([: ]|$)'', '' apr\\1'') | regex_replace('' May([: ]|$)'', '' mei\\1'') | regex_replace('' Jun([: ]|$)'', '' jun\\1'') | regex_replace('' Jul([: ]|$)'', '' jul\\1'') | regex_replace('' Aug([: ]|$)'', '' aug\\1'') | regex_replace('' Sep([: ]|$)'', '' sep\\1'') | regex_replace('' Oct([: ]|$)'', '' okt\\1'') | regex_replace('' Nov([: ]|$)'', '' nov\\1'') | regex_replace('' Dec([: ]|$)'', '' dec\\1'') }}</b>{{ '' (weekplanning)'' if p.get(''source'') == ''repeating'' else '' (vaste dag per week)'' }}</center>
 
 
-              | LAADTIJD | ENERGIEPRIJS |
+              | LAADTIJD | ENERGIEPRIJS | VERWACHTE KOSTEN |{{ '' GOEDKOPE KANSEN |'' if cheap_on else '''' }}
 
-              |:--|--:|
+              |:--|--:|--:|{{ ''--:|'' if cheap_on else '''' }}
 
-              | <font size="6" color="#22c55e"><b>{{ ''–'' if solo else (p.charge_time | default(''–'') ~ '' h'') }}</b></font> @ {{ (p.kw | default(''–'') | string).replace(''.'', '','') }} kW | <font size="6" color="#22c55e"><b>{{ (p.avg_price_ct | string | replace(''.'', state_attr(''sensor.hesc_v3_prices'', ''decimal'') or '','')) ~ '' '' ~ (state_attr(''sensor.hesc_v3_prices'', ''minor'') or ''ct'') ~ ''/kWh'' if (p.avg_price_ct is not none and q > 0 and not solo) else ''–'' }}</b></font> |
+              | <font size="6" color="#22c55e"><b>{{ ''–'' if solo else (p.charge_time | default(''–'') ~ '' h'') }}</b></font> @ {{ (p.kw | default(''–'') | string).replace(''.'', '','') }} kW | <font size="6" color="#22c55e"><b>{{ (p.avg_price_ct | string | replace(''.'', state_attr(''sensor.hesc_v3_prices'', ''decimal'') or '','')) ~ '' '' ~ (state_attr(''sensor.hesc_v3_prices'', ''minor'') or ''ct'') ~ ''/kWh'' if (p.avg_price_ct is not none and q > 0 and not solo) else ''–'' }}</b></font> | <font size="6" color="#22c55e"><b>{{ (state_attr(''sensor.hesc_v3_expected_charge_cost'', ''display'') or ''–'') if (q > 0 and not solo) else ''–'' }}</b></font> |{{ ('' <font size="5" color="#a855f7"><b>≤ '' ~ (((states(''number.hesc_v3_charge_plan_opportunity_price'') | float(0) * 100) | round(1) | string).replace(''.'', '','') | string | replace(''.'', state_attr(''sensor.hesc_v3_prices'', ''decimal'') or '','')) ~ '' '' ~ (state_attr(''sensor.hesc_v3_prices'', ''minor'') or ''ct'') ~ ''/kWh</b></font> |'') if cheap_on else '''' }}
 
 
               | ACCU NU | DOEL | NOG NODIG | STATUS |
 
               |:--|:--|:--|:--|
 
-              | <font size="4"><b>{{ (p.soc | round(0) | int ~ ''%'') if p.soc is not none else ''?'' }}</b></font> | <font size="4"><b>{{ p.goal | default(''–'') }}%</b></font> | <font size="4"><b>{{ (p.need_kwh | default(0) | string).replace(''.'', '','') }} kWh</b></font>{{ '' (<ha-icon icon="hesc:zon" style="--mdc-icon-size:16px;vertical-align:-3px;margin-right:4px"></ha-icon>~'' ~ (p.solar_kwh | string).replace(''.'', '','') ~ '' kWh zon)'' if (p.solar_kwh | default(0)) > 0 else '''' }}{{ '''' if solo else ('' · '' ~ (p.quarters | default(0)) ~ '' × 15 min net'') }}{{ '' · <ha-icon icon="hesc:waarschuwing" style="--mdc-icon-size:16px;vertical-align:-3px;margin-right:4px"></ha-icon>niet genoeg tijd meer voor het doel'' if (on and not solo and (p.short_of_time | default(false))) else '''' }} | <font size="4" color="{{ ''#22c55e'' if on else ''#cbd5e1'' }}"><b>{{ ''<ha-icon icon="hesc:vinkje-cirkel" style="--mdc-icon-size:20px;vertical-align:-4px;margin-right:4px"></ha-icon>al bereikt'' if (p.need_kwh is defined and p.need_kwh == 0 and p.soc is not none) else (''<ha-icon icon="hesc:zon" style="--mdc-icon-size:20px;vertical-align:-4px;margin-right:4px"></ha-icon>laadt uit zichzelf'' if (on and solo) else ((''<ha-icon icon="hesc:zandloper" style="--mdc-icon-size:20px;vertical-align:-4px;margin-right:4px"></ha-icon>gepland'' if on else ''<ha-icon icon="hesc:vergrootglas" style="--mdc-icon-size:20px;vertical-align:-4px;margin-right:4px"></ha-icon>voorbeeld'') if p.quarters | default(0) > 0 else ''–'')) }}</b></font> |
+              | <font size="4"><b>{{ (p.soc | round(0) | int ~ ''%'') if p.soc is not none else ''?'' }}</b></font> | <font size="4"><b>{{ p.goal | default(''–'') }}%</b></font> | <font size="4"><b>{{ (p.need_kwh | default(0) | string).replace(''.'', '','') }} kWh</b></font>{{ '' (<ha-icon icon="hesc:zon" style="--mdc-icon-size:16px;vertical-align:-3px;margin-right:4px"></ha-icon>~'' ~ (p.solar_kwh | string).replace(''.'', '','') ~ '' kWh zon)'' if (p.solar_kwh | default(0)) > 0 else '''' }}{{ '''' if solo else ('' · '' ~ (p.quarters | default(0)) ~ '' × 15 min net'') }}{{ '' · <ha-icon icon="hesc:waarschuwing" style="--mdc-icon-size:16px;vertical-align:-3px;margin-right:4px"></ha-icon>niet genoeg tijd meer voor het doel'' if (on and not solo and (p.short_of_time | default(false))) else '''' }} | <font size="4" color="{{ ''#22c55e'' if on else ''#cbd5e1'' }}"><b>{{ ''<ha-icon icon="hesc:vinkje-cirkel" style="--mdc-icon-size:20px;vertical-align:-4px;margin-right:4px"></ha-icon>al bereikt'' if (p.need_kwh is defined and p.need_kwh == 0 and p.soc is not none) else (''<ha-icon icon="hesc:zon" style="--mdc-icon-size:20px;vertical-align:-4px;margin-right:4px"></ha-icon>laadt uit zichzelf'' if (on and solo) else (''<ha-icon icon="hesc:zandloper" style="--mdc-icon-size:20px;vertical-align:-4px;margin-right:4px"></ha-icon>gepland'' if p.quarters | default(0) > 0 else ''–'')) }}</b></font> |
 
               {%- if p.prices_complete is defined and not p.prices_complete %}
 
 
               <small><ha-icon icon="hesc:info" style="--mdc-icon-size:14px;vertical-align:-2px;margin-right:4px"></ha-icon>Prijzen bekend tot {{ ([''ma'', ''di'', ''wo'', ''do'', ''vr'', ''za'', ''zo''][(as_timestamp(p.prices_until) | timestamp_custom(''%w'') | int + 6) % 7] ~ '' '' ~ (as_timestamp(p.prices_until) | timestamp_custom(''%H:%M''))) if p.prices_until else ''–'' }}. Het definitieve plan volgt als alle prijzen tot vertrek bekend zijn.</small>
 
-              {%- endif %}'
+              {%- endif %}{% else %}
+
+
+              <center><b>Geen laadplan actief</b></center>{% endif %}'
         - type: custom:hesc-style
           style:
             ha-markdown$: 'table { width: 100%; }

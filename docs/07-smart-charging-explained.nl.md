@@ -83,7 +83,7 @@ Stel: je sluit om 18:00 aan met de auto op 40 %, en je weekplan zegt *80 % om 07
 4. **Welke 9 kwartieren?** De goedkoopste tussen nu en 07:30. Meestal ergens in de nacht.
 
 De geplande kwartieren zie je **amber** in de prijsgrafiek op het tabblad *Laadplan*. Staat
-het plan niet aan, dan laat de grafiek zien wat het *zou* doen, met het woord *voorbeeld*.
+er geen plan aan, dan toont de grafiek geen geplande kwartieren en zegt de plankaart *Geen laadplan actief*.
 
 ## Goedkope kansen en de zon
 

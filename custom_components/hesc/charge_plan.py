@@ -406,6 +406,11 @@ def run(S: dict[str, Any], flow: dict[str, Any], now: int) -> Result:  # noqa: C
                                       "data": {"title": t, "message": message,
                                                "data": {"push": {"interruption-level": "time-sensitive"}, "ttl": 0, "priority": "high"} if p == 1 else {}}}})
 
+    if (plan_ok and not plan_active and _truthy(X.get("checkDl")) and not _truthy(X.get("checkDone"))
+            and now < X["checkDl"]):
+        # 3.1.0: the plan was switched off (or paused by holiday/skip) before its ready-by time:
+        # nothing of that plan stays active, so no goal check and no notification at that time.
+        X["checkDone"] = True
     if _truthy(X.get("checkDl")) and now >= X["checkDl"] and not _truthy(X.get("checkDone")):
         X["checkDone"] = True
         g = X.get("checkGoal")

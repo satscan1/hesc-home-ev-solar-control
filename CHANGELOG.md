@@ -1,6 +1,41 @@
 # Changelog
 
-## 3.0.0 · 22-10-2026 
+## 3.1.0 · 25-10-2026
+
+**Charge plan card**
+- No active plan: the card only says *No charging plan active*. The old ready-by time, charging
+  time, price and the word *preview* are gone, so a quick look no longer suggests the car is
+  being charged.
+- Active plan: the expected cost now stands next to the energy price. With cheap chances on,
+  the cheap-chance price limit is shown next to it in purple (the same colour as in the chart).
+  HESC shows no amount for cheap chances: a negative market price does not mean you get paid.
+- A plan that is switched off (or paused by holiday mode) before its ready-by time leaves nothing
+  behind: no goal check and no *EV goal missed* notification at that time any more, and the
+  morning summary says *No charge plan* instead of the old time with *(off)*.
+
+**Price chart**
+- Where the sun can start charging, the sun wins over a cheap chance: those quarters are green
+  only (the sun is cheaper, and it is what HESC really does).
+- Expected prices (not yet published) have an almost empty area, so they read differently from
+  the real prices at a glance.
+
+**Languages**
+- The HESC dashboard in the sidebar follows the language each user chose in the profile (before:
+  the language of Home Assistant, which is still used when a user has not chosen one). All titles
+  follow, also the price chart title.
+- The texts HESC makes itself (state, reason, last action, charge plan, home battery and EV,
+  charging current, notices) are shown in Dutch and German on the dashboard in that language.
+  Notifications, the morning summary and the phone and watch summary come in the language of
+  Home Assistant. Inside, HESC keeps working with the English texts, so your own automations
+  that read them keep working.
+- Still in English: the values in drop-down lists (for example *Today*, *Tomorrow*). Translating
+  those would change the values your own automations use; that waits for a later version.
+
+**README**
+- A row of badges under the logo (release, HACS, stars, Ko-fi) and a *Support this project*
+  section with the Ko-fi button.
+
+## 3.0.0 · 22-10-2026
 
 The first release of HESC as a Home Assistant integration. It can do everything HESC v2 can,
 without Node-RED and without a YAML package. HESC v2 stays available; see

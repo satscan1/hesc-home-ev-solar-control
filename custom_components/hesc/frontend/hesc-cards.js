@@ -574,7 +574,9 @@ const boot = () => {
       const val = (p) => Math.round(p.value * 1000) / 10;
       const is = {
         grid: (p) => planned.has(tm(p)),
-        cheap: (p) => !p.fc && oppOn && !isNaN(thr) && p.value <= thr && !sunSkip(tm(p)),
+        // 3.1.0: where the sun can start charging, the sun wins over a cheap chance (it is cheaper, and it is
+        // what HESC really does), so that quarter is shown green only
+        cheap: (p) => !p.fc && oppOn && !isNaN(thr) && p.value <= thr && !sunSkip(tm(p)) && !(sunW(tm(p)) >= start),
         sun: (p) => sunW(tm(p)) >= start,
         hold: (p) => { const w = sunW(tm(p)); return w >= hold && w < start; },
       };
@@ -599,7 +601,8 @@ const boot = () => {
         patterns: [{ id: "hescCheap", color: "#a855f7" }],
         series: [
           { type: "area", color: "#cbd5e1", opacity: 0.12, stroke: 2, points: s.price },
-          { type: "area", color: "#7b8494", opacity: 0.08, stroke: 2, dash: 5, points: s.expected },
+          // 3.1.0: the expected (not yet published) prices get an almost empty area, so they read differently
+          { type: "area", color: "#7b8494", opacity: 0.02, stroke: 2, dash: 5, points: s.expected },
           { type: "area", color: "#22c55e", opacity: 0.6, stroke: 0, points: s.sun },
           { type: "area", color: "#ff9800", opacity: 0.6, stroke: 0, points: s.hold },
           { type: "area", color: "#2563eb", opacity: 0.85, stroke: 0, points: s.grid },

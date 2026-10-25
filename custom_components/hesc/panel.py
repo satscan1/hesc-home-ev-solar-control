@@ -29,9 +29,10 @@ own copy at any address with one click, or take control of it to change it. The 
 HESC for the config over the websocket (`hesc/dashboard`), with the links set to its own address.
 
 Since 3.0.0 the dashboard also comes in other languages (`hesc_v3_dashboard.<lang>.yaml`, made from the
-English one by tools/dashboard_translate.py; only the texts differ). The sidebar dashboard follows the
-language of Home Assistant (Settings → System → General); the one-click dashboard follows the language
-of the user who opens it. A language without its own file gets the English dashboard.
+English one by tools/dashboard_translate.py; only the texts differ). Since 3.1.0 the sidebar dashboard
+follows the language each user chose in the profile, like the one-click dashboard (before: the language
+of Home Assistant, Settings → System → General, which is still the fallback). A language without its own
+file gets the English dashboard.
 """
 
 from __future__ import annotations
@@ -142,7 +143,8 @@ class HescDashboard:
         self._config: dict[str, Any] | None = None  # in the language of Home Assistant
         self._config_lang = "en"
         self._json: Any = None
-        self._lang_configs: dict[str, dict[str, Any]] = {}  # other languages, for the strategy
+        self._lang_configs: dict[str, dict[str, Any]] = {}  # other languages (per user, and the strategy)
+        self._lang_json: dict[str, Any] = {}
         self._lovelace: Any = None
         self.panel_registered = False
         self._unsub: Any = None
@@ -189,6 +191,7 @@ class HescDashboard:
             self._config, self._mapping, self._config_lang = config, mapping, lang
             self._json = cached_json_fragment(config)
             self._lang_configs = {}
+            self._lang_json = {}
         return self._config, self._json
 
     async def _build(self, lang: str, mapping: dict[str, str]) -> dict[str, Any]:
@@ -208,6 +211,39 @@ class HescDashboard:
         if code not in self._lang_configs:
             self._lang_configs[code] = await self._build(code, self._mapping or {})
         return self._lang_configs[code]
+
+    async def async_json_for(self, lang: str | None, force: bool = False) -> Any:
+        """The sidebar dashboard as JSON in `lang` (3.1.0: each user's own language)."""
+        from homeassistant.helpers.json import cached_json_fragment
+
+        _, data = await self.async_config(force)
+        code = self.language(lang)
+        if code == self._config_lang:
+            return data
+        if code not in self._lang_json:
+            self._lang_json[code] = cached_json_fragment(await self.async_config_for(code))
+        return self._lang_json[code]
+
+    async def async_user_language(self) -> str | None:
+        """The language the user who asks has chosen in the profile, or None (then: Home Assistant's).
+
+        The lovelace websocket command runs inside the asking connection, so the user is known.
+        The frontend keeps the profile language in the user's frontend data (key "language").
+        Anything unexpected gives None: the dashboard then follows Home Assistant's language,
+        as in 3.0.0."""
+        try:
+            from homeassistant.components.frontend.storage import async_user_store
+            from homeassistant.components.websocket_api import current_connection
+
+            conn = current_connection.get()
+            user = getattr(conn, "user", None)
+            if user is None:
+                return None
+            data = (await async_user_store(self.hass, user.id)).data.get("language")
+            lang = data.get("language") if isinstance(data, dict) else None
+            return lang if isinstance(lang, str) and lang else None
+        except Exception:  # noqa: BLE001 - never let this cost the dashboard
+            return None
 
     # ---- registration -------------------------------------------------------------------------
     def _make_lovelace(self) -> Any:
@@ -229,12 +265,12 @@ class HescDashboard:
                 return {"mode": self.mode, "views": len(config.get("views", []))}
 
             async def async_load(self, force: bool) -> dict[str, Any]:
+                lang = await owner.async_user_language()
                 config, _ = await owner.async_config(force)
-                return config
+                return await owner.async_config_for(lang) if lang else config
 
             async def async_json(self, force: bool) -> Any:
-                _, data = await owner.async_config(force)
-                return data
+                return await owner.async_json_for(await owner.async_user_language(), force)
 
             def changed(self) -> None:
                 self._config_updated()
