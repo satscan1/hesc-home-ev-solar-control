@@ -63,6 +63,7 @@ from . import (
     pricefetch,
     prices,
     report,
+    report_view,
     settings_backup,
     texts,
 )
@@ -141,7 +142,6 @@ V2_PRICE_HISTORY = ("hesc-data", "price_history.json")
 V2_SOC_PLUGINS = ("hesc-data", "ev_soc_plugins.json")
 V2_COSTS = ("hesc-data", "charging_costs.json")
 V2_HISTORY = ("hesc-data", "history.jsonl")
-REPORT_DIR = ("www", DOMAIN + "_v3")  # served as /local/hesc_v3/
 REPORT_WEBHOOK = DOMAIN + "_v3_report_viewed"
 # v2 helpers the logic switches itself; v3 keeps them (live mode only)
 OWN_FLAGS = ("input_boolean.hesc_plan_owns_charging",)
@@ -1620,12 +1620,13 @@ class HescCoordinator(DataUpdateCoordinator[Inputs]):
             _LOGGER.exception("HESC v3 report failed")
             raise HomeAssistantError(f"HESC v3 could not build the report: {err}") from err
         self._apply_advisor(r)
-        folder = Path(self.hass.config.path(*REPORT_DIR))
-        for name, body, is_open in (("open.html", open_html, True), ("report.html", html, False)):
-            if not await self.hass.async_add_executor_job(self._write_file, folder / name, body):
-                raise HomeAssistantError(f"Could not write {folder / name}")
-            acts, self.report_flow, _ = report.mark_ready(self.report_flow, self._view(), self._now_ms(), is_open)
-            self._publish(acts)
+        # 3.1.2: the report lives in HESC's own folder and is served only behind the login
+        # (report_view.py); the launcher page open.html is no longer needed (the view sends no-store).
+        path = report_view.report_path(self.hass)
+        if not await self.hass.async_add_executor_job(self._write_file, path, html):
+            raise HomeAssistantError(f"Could not write {path}")
+        acts, self.report_flow, _ = report.mark_ready(self.report_flow, self._view(), self._now_ms(), False)
+        self._publish(acts)
 
     def report_viewed(self) -> None:
         """v2 automation "Reset report after viewing" (webhook)."""

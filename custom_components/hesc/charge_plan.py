@@ -393,7 +393,10 @@ def run(S: dict[str, Any], flow: dict[str, Any], now: int) -> Result:  # noqa: C
     def notify(title: str, message: str, prio: int, meta: dict[str, Any] | None = None) -> None:
         p = prio or 1
         services = [x.strip() for x in txt("input_text.hesc_notify_services").split(",")]
-        services = [x for x in services if x]
+        # 3.1.2: only notify services (a bare name means notify.<name>); any other domain.service is
+        # ignored, so the notify text field can never make HESC call another (admin-only) service.
+        services = [x if "." in x else "notify." + x for x in services if x]
+        services = [x for x in services if x.startswith("notify.") and len(x) > len("notify.")]
         t = "HESC P" + _s(p) + " · " + title
         flow["hescNoticeP1"] = {"text": title + ": " + message, "at": now, "prio": p,
                                 "goal": meta["goal"] if (meta and meta.get("goal") is not None) else None}
@@ -402,7 +405,7 @@ def run(S: dict[str, Any], flow: dict[str, Any], now: int) -> Result:  # noqa: C
         if p >= 3:
             return
         for sv in services:
-            msgs1.append({"payload": {"action": sv if sv.find(".") > 0 else "notify." + sv,
+            msgs1.append({"payload": {"action": sv,
                                       "data": {"title": t, "message": message,
                                                "data": {"push": {"interruption-level": "time-sensitive"}, "ttl": 0, "priority": "high"} if p == 1 else {}}}})
 

@@ -28,6 +28,7 @@ from .const import CONF_CHARGER_START_STOP, CONF_CHARGER_TYPE, DOMAIN
 from .coordinator import REPORT_WEBHOOK, HescConfigEntry, HescCoordinator
 from .entity import ENGLISH_NAMES, load_english_names
 from .panel import async_remove_dashboard, async_setup_dashboard, async_setup_websocket
+from .report_view import HescReportView, remove_legacy_report
 from .services import async_setup_services
 
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
@@ -65,6 +66,9 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     cards_js = ICONS_DIR / "hesc-cards.js"
     cards_version = await hass.async_add_executor_job(lambda: hashlib.sha256(cards_js.read_bytes()).hexdigest()[:8])
     add_extra_js_url(hass, f"{ICONS_URL}/hesc-cards.js?v={cards_version}")
+    # Since 3.1.2: the support report only behind the login, no longer in /config/www.
+    hass.http.register_view(HescReportView())
+    await hass.async_add_executor_job(remove_legacy_report, hass)
     return True
 
 

@@ -824,6 +824,37 @@ const boot = () => {
   }
 
   // ---------------------------------------------------------------------------------------------
+  // Since 3.1.2: "View report". The report is only served behind the login (/api/hesc/report), so the
+  // card asks Home Assistant for a short-lived signed path and opens that in a new tab.
+  class HescReportButton extends HescBase {
+    static getStubConfig() { return { name: "View report" }; }
+    _watch() { return []; }
+    _render() {
+      if (!this._card) {
+        // looks like the tile it replaces: icon in a green circle, name next to it
+        this._shell(".body{padding:10px 12px;display:flex;align-items:center;gap:10px;font-size:14px;font-weight:500;line-height:normal;cursor:pointer;color:var(--primary-text-color)}" +
+          ".ic{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(34,197,94,.2);color:#22c55e;flex:none}" +
+          ".ic ha-icon{--mdc-icon-size:24px}");
+        this._card.addEventListener("click", () => this._open());
+      }
+      this._body.innerHTML = '<div class="ic"><ha-icon icon="' + (this._config.icon || "hesc:document") + '"></ha-icon></div><span></span>';
+      this._body.querySelector("span").textContent = this._config.name || tr("View report");
+    }
+    async _open() {
+      // open the tab right away (a tab opened after an await is often blocked), then point it at the report
+      const tab = window.open("", "_blank");
+      try {
+        const r = await this._hass.callWS({ type: "auth/sign_path", path: "/api/hesc/report", expires: 60 });
+        if (tab) tab.location.href = r.path; else window.location.href = r.path;
+      } catch (e) {
+        if (tab) tab.close();
+      }
+    }
+    getCardSize() { return 1; }
+    getGridOptions() { return { columns: 6, rows: "auto" }; }
+  }
+
+  // ---------------------------------------------------------------------------------------------
   // A card with extra CSS. `style` is CSS for the card itself, or {".": css, "<element>$": css} where
   // "<element>$" is the inside of that element (e.g. "ha-markdown$" for the text of a markdown card).
   class HescStyle extends HTMLElement {
@@ -910,6 +941,7 @@ const boot = () => {
   customElements.define("hesc-costs", HescCosts);
   customElements.define("hesc-option-button", HescOptionButton);
   customElements.define("hesc-style", HescStyle);
+  customElements.define("hesc-report-button", HescReportButton);
 
   // A dashboard opened while this file was still loading shows an (invisible) error card for each HESC
   // card; Home Assistant replaces it once the card exists, but that signal is lost when the error card
@@ -932,6 +964,7 @@ const boot = () => {
     ["hesc-expected-solar", "HESC · Expected solar charging", "When the car can charge on sun today and tomorrow."],
     ["hesc-costs", "HESC · Charging costs", "Totals or tiles per day, week, month, quarter or year (view: totals or tiles)."],
     ["hesc-option-button", "HESC · Option button", "One option of a select as a button."],
+    ["hesc-report-button", "HESC · View report", "Opens HESC's support report (behind the login)."],
   ].forEach(([type, name, description]) => window.customCards.push({ type, name, description, preview: false, documentationURL: "https://github.com/satscan1/hesc-home-ev-solar-control" }));
 };
   // Home Assistant's frontend swaps the browser's custom element registry for its own while it starts

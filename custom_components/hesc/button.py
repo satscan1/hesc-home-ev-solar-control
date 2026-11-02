@@ -100,7 +100,7 @@ class NotifyTestButton(HescEntity, ButtonEntity):
 
 
 class GenerateReportButton(HescEntity, ButtonEntity):
-    """v2's input_button.hesc_generate_report: builds the report in /config/www/hesc_v3/."""
+    """v2's input_button.hesc_generate_report: builds the report in /config/hesc_v3/report/ (served behind the login since 3.1.2)."""
 
     def __init__(self, coordinator: HescCoordinator) -> None:
         super().__init__(coordinator, "generate_report")
