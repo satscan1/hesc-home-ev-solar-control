@@ -1,5 +1,23 @@
 # Changelog
 
+## 3.1.2 · 02-11-2026
+
+Two security fixes from the review for the HACS default list. HESC charges exactly as in 3.1.1.
+
+**Support report**
+- The report (charging history, entity states and settings) is now only opened through Home
+  Assistant, with your login. Before, anyone who could reach your Home Assistant could open it
+  without logging in. The old report files are removed when HESC starts.
+- *View report* on HESC's dashboard opens it for you, in a new tab.
+- Made your own copy of the dashboard before 3.1.2? Its *View report* button no longer finds the
+  report. Replace that card with the card *HESC · View report* (search for HESC in the card
+  picker), or make a new copy of the dashboard.
+
+**Notifications**
+- *Notification services* only accepts notify services. A plain name like *mobile_app_iphone*
+  still works. Anything else in that field is ignored, so it can no longer make HESC call other
+  services.
+
 ## 3.1.1 · 25-10-2026
 
 - The expected cost in the charge plan card shows the right amount at once. Before, it could

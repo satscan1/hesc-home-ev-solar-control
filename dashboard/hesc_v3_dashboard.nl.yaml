@@ -323,19 +323,9 @@ views:
       - entity: binary_sensor.hesc_v3_report_ready
         state: 'on'
       card:
-        type: tile
-        entity: binary_sensor.hesc_v3_report_ready
+        type: custom:hesc-report-button
         name: Rapport bekijken
-        icon: mdi:file-document-check-outline
-        color: green
-        state_content: []
-        hide_state: true
-        tap_action:
-          action: url
-          url_path: /local/hesc_v3/open.html
-        icon_tap_action:
-          action: url
-          url_path: /local/hesc_v3/open.html
+        icon: hesc:document
         grid_options:
           columns: 6
       grid_options:
