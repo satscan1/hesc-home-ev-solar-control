@@ -11,8 +11,8 @@ from typing import Final
 
 DOMAIN: Final = "hesc"
 NAME: Final = "HESC v3"
-VERSION: Final = "3.1.2"  # same as manifest.json (tests/test_manifest_version)
-BUILD_DATE: Final = "02-11-2026"  # date of this build, shown next to the version under the logo on Main; set to the release date when a release is made
+VERSION: Final = "3.1.3"  # same as manifest.json (tests/test_manifest_version)
+BUILD_DATE: Final = "03-11-2026"  # date of this build, shown next to the version under the logo on Main; set to the release date when a release is made
 
 # v2 runs its decision round every 30 s; v3 reads its inputs at the same pace.
 UPDATE_INTERVAL: Final = timedelta(seconds=30)
