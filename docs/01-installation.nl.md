@@ -38,9 +38,12 @@
 ## 1. De integratie installeren
 
 **Met HACS**
-1. HACS → ⋮ → **Custom repositories** → voeg `https://github.com/satscan1/hesc-home-ev-solar-control` toe, type
-   **Integration**.
-2. Zoek **HESC - Home EV Solar Control** in HACS en klik op **Download**.
+1. Klik op de knop hieronder: je eigen Home Assistant opent HESC meteen in HACS. Of open HACS en zoek
+   **HESC - Home EV Solar Control** (HESC staat in de standaardlijst van HACS).
+
+   [![Open HESC in HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=satscan1&repository=hesc-home-ev-solar-control&category=integration)
+
+2. Klik op **Download**.
 3. Start Home Assistant opnieuw.
 
 **Met de hand**
