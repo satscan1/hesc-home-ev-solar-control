@@ -1,5 +1,21 @@
 # Changelog
 
+## 3.1.4 · 03-11-2026
+
+HESC is now in the HACS default list. HESC charges exactly as in 3.1.3.
+
+**Installing**
+- Find HESC in HACS by searching for *HESC - Home EV Solar Control*. You no longer need to add
+  it as a custom repository first.
+- New *Open in HACS* button in the README and the installation guide: one click opens HESC in
+  HACS on your own Home Assistant.
+- Already installed HESC as a custom repository? Nothing to do: updates keep coming the same way.
+
+**Logo**
+- The HESC logo now has the season frame of the house style: spring, summer, autumn and winter
+  around the logo. On HESC's dashboard the frame slowly glows (only the frame moves). In HACS and
+  the README the frame stands still.
+
 ## 3.1.3 · 03-11-2026
 
 One small fix from the review for the HACS default list. HESC charges exactly as in 3.1.2.
