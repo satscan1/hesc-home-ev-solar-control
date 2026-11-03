@@ -635,7 +635,7 @@ views:
       card:
         type: markdown
         text_only: true
-        content: '<table><tr><td><a href="/hesc-v3/seizoen"><img src="/hesc_v3_frontend/hesc-logo.png?v=1" width="120" height="120" alt="HESC"></a></td><td>v{{ device_attr(device_id(''sensor.hesc_v3_state''), ''sw_version'') }}<br>{%- set n = states(''sensor.hesc_v3_notice'') -%}
+        content: '<table><tr><td><a href="/hesc-v3/seizoen"><img src="/hesc_v3_frontend/hesc-logo.webp?v=2" width="120" height="120" alt="HESC"></a></td><td>v{{ device_attr(device_id(''sensor.hesc_v3_state''), ''sw_version'') }}<br>{%- set n = states(''sensor.hesc_v3_notice'') -%}
 
           {%- set p = state_attr(''sensor.hesc_v3_notice'', ''prio'') | int(2) -%}
 
@@ -3521,7 +3521,7 @@ views:
           card:
             type: markdown
             text_only: true
-            content: <a href="/hesc-v3/home-ev-solar-control"><img src="/hesc_v3_frontend/hesc-logo.png?v=1" width="120" height="120" alt="HESC"></a>
+            content: <a href="/hesc-v3/home-ev-solar-control"><img src="/hesc_v3_frontend/hesc-logo.webp?v=2" width="120" height="120" alt="HESC"></a>
         - type: custom:hesc-style
           style:
             ha-markdown$: 'h2 ha-icon { --mdc-icon-size: 24px; margin-right: 4px; }
