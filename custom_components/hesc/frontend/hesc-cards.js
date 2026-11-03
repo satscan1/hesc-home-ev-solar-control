@@ -837,7 +837,9 @@ const boot = () => {
           ".ic ha-icon{--mdc-icon-size:24px}");
         this._card.addEventListener("click", () => this._open());
       }
-      this._body.innerHTML = '<div class="ic"><ha-icon icon="' + (this._config.icon || "hesc:document") + '"></ha-icon></div><span></span>';
+      // 3.1.3: the icon goes in as an attribute, never as markup (a quote in it can't break out)
+      this._body.innerHTML = '<div class="ic"><ha-icon></ha-icon></div><span></span>';
+      this._body.querySelector("ha-icon").setAttribute("icon", String(this._config.icon || "hesc:document"));
       this._body.querySelector("span").textContent = this._config.name || tr("View report");
     }
     async _open() {
