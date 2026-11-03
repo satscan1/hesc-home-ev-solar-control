@@ -1,5 +1,12 @@
 # Changelog
 
+## 3.1.3 · 03-11-2026
+
+One small fix from the review for the HACS default list. HESC charges exactly as in 3.1.2.
+
+- *View report*: the icon of the card is now always read as an icon name, never as part of the
+  page. An icon with a quote in it can no longer change the dashboard.
+
 ## 3.1.2 · 02-11-2026
 
 Two security fixes from the review for the HACS default list. HESC charges exactly as in 3.1.1.
