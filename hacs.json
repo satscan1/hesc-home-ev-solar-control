@@ -1,7 +1,7 @@
 {
-  "name": "HESC - Home EV Solar Control",
+  "name": "HESC v4 - Home EV Solar Control",
   "homeassistant": "2026.10.1",
   "render_readme": true,
   "zip_release": true,
-  "filename": "hesc.zip"
+  "filename": "hesc_v4.zip"
 }

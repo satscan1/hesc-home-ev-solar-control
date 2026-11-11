@@ -1,101 +1,182 @@
-<p align="center"><img src="https://raw.githubusercontent.com/satscan1/hesc-home-ev-solar-control/main/custom_components/hesc/frontend/hesc-logo.png" width="160" alt="HESC"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/satscan1/hesc-home-ev-solar-control/main/docs/images/hesc-v4-logo.png" width="160" alt="HESC v4"></p>
 
-<p align="center"><a href="https://github.com/satscan1/hesc-home-ev-solar-control/releases"><img src="https://img.shields.io/github/v/release/satscan1/hesc-home-ev-solar-control" alt="Release"></a> <a href="https://hacs.xyz"><img src="https://img.shields.io/badge/HACS-Default-41BDF5" alt="HACS"></a> <a href="https://github.com/satscan1/hesc-home-ev-solar-control"><img src="https://img.shields.io/github/stars/satscan1/hesc-home-ev-solar-control?style=flat&logo=github" alt="Stars"></a> <a href="https://ko-fi.com/satscan"><img src="https://img.shields.io/badge/Ko--fi-satscan-FF5E5B?logo=kofi&logoColor=white" alt="Support me on Ko-fi"></a></p>
+<p align="center"><a href="https://github.com/satscan1/hesc-home-ev-solar-control/releases"><img src="https://img.shields.io/github/v/release/satscan1/hesc-home-ev-solar-control?include_prereleases" alt="Release"></a> <a href="https://hacs.xyz"><img src="https://img.shields.io/badge/HACS-Default-41BDF5" alt="HACS"></a> <a href="https://github.com/satscan1/hesc-home-ev-solar-control"><img src="https://img.shields.io/github/stars/satscan1/hesc-home-ev-solar-control?style=flat&logo=github" alt="Stars"></a> <a href="https://ko-fi.com/satscan"><img src="https://img.shields.io/badge/Ko--fi-satscan-FF5E5B?logo=kofi&logoColor=white" alt="Support me on Ko-fi"></a></p>
 
-<p align="center"><a href="https://my.home-assistant.io/redirect/hacs_repository/?owner=satscan1&repository=hesc-home-ev-solar-control&category=integration"><img src="https://my.home-assistant.io/badges/hacs_repository.svg" alt="Open HESC in HACS"></a></p>
+<p align="center"><a href="https://my.home-assistant.io/redirect/hacs_repository/?owner=satscan1&repository=hesc-v4&category=integration"><img src="https://my.home-assistant.io/badges/hacs_repository.svg" alt="Open HESC v4 in HACS"></a></p>
 
-# HESC — Home EV Solar Control
+# HESC v4 — Smart EV Charging Management
 
-*Nederlands: [README.nl.md](https://github.com/satscan1/hesc-home-ev-solar-control/blob/main/README.nl.md) · Deutsch: [README.de.md](https://github.com/satscan1/hesc-home-ev-solar-control/blob/main/README.de.md)*
+*Set your plan. Plug in. HESC takes care of the rest.*
 
-HESC charges your electric car as much as possible on your own solar power, and from the grid
-at the cheapest moments when the sun is not enough. It runs inside Home Assistant.
+*Nederlands: [README.nl.md](README.nl.md) · Deutsch: [README.de.md](README.de.md)*
 
-<p align="center"><img src="https://raw.githubusercontent.com/satscan1/hesc-home-ev-solar-control/main/docs/images/infographic-en.png" width="100%" alt="HESC v3 at a glance"></p>
+HESC charges your electric car with your own solar power as much as it can, and from the grid at
+the cheapest moments when the sun is not enough. HESC v4 is the successor of HESC v3: easier to set
+up, with its own panel in Home Assistant and with **two cars and two chargers**.
 
-<p align="center"><img src="https://raw.githubusercontent.com/satscan1/hesc-home-ev-solar-control/main/docs/images/main.png" width="90%" alt="HESC dashboard"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/satscan1/hesc-home-ev-solar-control/main/docs/images/infographic-en.png" width="100%" alt="HESC v4 at a glance"></p>
 
-## What HESC does
+> **Release candidate (RC1).** HESC v4 is the successor of the HESC v3 series. Switching from v3 and back is always possible, see [Install](#1-install).
 
-- **Charges on sun.** HESC watches your solar forecast and your solar power, and lets your
-  charger start on sun at the right moment.
-- **Plans grid charging.** Tell HESC when the car must be ready and how full. HESC picks the
-  cheapest quarters with dynamic prices, and leaves room for the sun that is still to come.
-- **Works with your home battery.** When the home batteries would take all the sun, HESC gives
-  the car a kickstart, so it gets its turn instead of waiting until the batteries are full. HESC
-  never controls the home battery itself: this works with a battery that reacts to what the house
-  uses (see [How it works](https://github.com/satscan1/hesc-home-ev-solar-control/blob/main/docs/04-how-it-works.md#home-battery-and-ev-kickstart)).
-- **Shows what happens.** A dashboard with today, the forecast, costs and advice; and a report
-  you can open at any time.
+The panel follows the language of your Home Assistant profile: Dutch, German, and English for every other language.
 
-## New in v3
+![Overview](docs/images/v4/en/en-01-overview.jpg)
 
-HESC v3 is a Home Assistant integration. It can do everything HESC v2 can, plus:
+## Contents
 
-- **No Node-RED and no YAML package any more.** You install one integration and fill in one
-  setup screen.
-- **Finds your charger and car by itself**, also when Home Assistant uses Dutch or German entity names.
-- **Works without a solar forecast** if you have none (Solcast, Open-Meteo and Forecast.Solar
-  are supported).
-- **Adjusts the charging current** on chargers that allow it, to get more sun into the car.
-- **Knows your charger's start level.** The advice never goes below what your charger needs to
-  start on sun.
-- **Phase advice** if your grid meter shows power per phase: it tells you if one phase holds
-  your charger back.
-- **The dashboard comes with HESC**: *HESC* in the sidebar, nothing to paste.
-- **Charge now** to a level you choose, from the grid, then back to sun by itself.
-- **Skip one day** of the weekly plan (a day off) without changing the plan.
-- **On your phone and watch** (iPhone, Apple Watch, Android, Wear OS): a one-line summary for a
-  widget, actions for Siri and Shortcuts, and one-tap buttons. See
-  [Dashboard](https://github.com/satscan1/hesc-home-ev-solar-control/blob/main/docs/06-dashboard.md#on-your-phone-and-watch).
+1. [Install](#1-install)
+2. [The first start](#2-the-first-start)
+3. [What HESC finds and what you fill in](#3-what-hesc-finds-and-what-you-fill-in)
+4. [One or two cars, one or two chargers](#4-one-or-two-cars-one-or-two-chargers)
+5. [The panel](#5-the-panel)
+6. [Planning](#6-planning)
+7. [Settings](#7-settings)
+8. [HESC on, off and shadow](#8-hesc-on-off-and-shadow)
+9. [Costs, solar forecast and report](#9-costs-solar-forecast-and-report)
+10. [Not ready yet](#not-ready-yet)
 
-HESC v2 stays available. You can run v3 next to v2 and switch over when you are ready; see
-[Upgrading from v2](https://github.com/satscan1/hesc-home-ev-solar-control/blob/main/docs/02-upgrade-from-v2.md).
+## 1. Install
 
-## How HESC is tested
+1. Search for **HESC** in HACS and install the newest version. Restart Home Assistant.
+2. *Settings → Devices & services → Add integration → HESC v4*.
+3. One question: **Install HESC v4?** With HESC v3 installed you can also take over v3's settings.
+4. **HESC v4** appears in the sidebar. The first start begins there.
 
-Every version is tested before release in a simulator that plays whole days in seconds: fixed
-scenarios (sunny summer day, cloudy winter day, negative prices, a charger that refuses to start,
-a restart in the middle of a plan, …) and real recorded days, for every supported charger. A new
-version must decide the same as the previous one, unless the change is intended.
+**From v3 to v4, and back.** HESC v4 is installed next to v3; nothing is removed. When you take over
+v3's settings, v4 then pauses v3, so only one of them ever controls the charger. To go back:
+*Settings › Expert › Notifications › Back to v3* turns v3 on again and pauses v4. If v3 is no longer in
+HACS, pick a v3 version there first.
 
-## What you need
+After installing, HESC is in **shadow mode**: it calculates and shows what it would do, but switches
+nothing. Shadow mode can only be switched off once the first start is done.
 
-- Home Assistant **2026.10.1** or newer.
-- Your **charger** in Home Assistant, through its own integration.
-- Your **car's battery level** in Home Assistant (recommended). HESC also works without it, but
-  plans more accurately with it.
-- Optional: a **solar forecast**, **dynamic energy prices**, a **home battery**, and
-  [Home PV Control (HPVC)](https://github.com/BioPC/home-pv-control) 1.5.1 or newer.
+## 2. The first start
 
-## Install in three steps
+The first start asks a few things first, and after that only what HESC did not find itself.
 
-1. Install the integration (HACS or by hand).
-2. Add **HESC v3** under *Settings → Devices & services* and fill in the setup screen.
-3. Open **HESC** in the sidebar: the dashboard and its cards come with HESC, nothing else to install.
+1. **How do you charge at home?** One car · two cars on one charger · two cars, each with its own charger.
+2. **Your house.** Connection (1 or 3 phases, amps), load balancer, solar panels, dynamic prices, and
+   the confirmation that your installation can take the charging.
+3. **Charger.** Pick the brand. With two chargers of the same brand you choose which is which.
+4. **Car.** Name, colour and battery capacity (the latter only when the car does not report it).
+5. **What HESC did not find.** For example the battery-level sensor or the prices.
 
-HESC starts in **shadow mode**: it watches and shows what it would do, but switches nothing until
-you turn shadow mode off. Step by step: [Installation](https://github.com/satscan1/hesc-home-ev-solar-control/blob/main/docs/01-installation.md).
+With a Wallbox and one car this is about 9 taps.
 
-## Documentation
+## 3. What HESC finds and what you fill in
 
-| | English | Nederlands | Deutsch |
-|---|---|---|---|
-| Installation | [01-installation](https://github.com/satscan1/hesc-home-ev-solar-control/blob/main/docs/01-installation.md) | [01-installatie](https://github.com/satscan1/hesc-home-ev-solar-control/blob/main/docs/01-installation.nl.md) | [01-installation](https://github.com/satscan1/hesc-home-ev-solar-control/blob/main/docs/01-installation.de.md) |
-| Upgrading from v2 | [02-upgrade-from-v2](https://github.com/satscan1/hesc-home-ev-solar-control/blob/main/docs/02-upgrade-from-v2.md) | [02-overstappen-van-v2](https://github.com/satscan1/hesc-home-ev-solar-control/blob/main/docs/02-upgrade-from-v2.nl.md) | [02-umstieg-von-v2](https://github.com/satscan1/hesc-home-ev-solar-control/blob/main/docs/02-upgrade-from-v2.de.md) |
-| Settings | [03-settings](https://github.com/satscan1/hesc-home-ev-solar-control/blob/main/docs/03-settings.md) | [03-instellingen](https://github.com/satscan1/hesc-home-ev-solar-control/blob/main/docs/03-settings.nl.md) | [03-einstellungen](https://github.com/satscan1/hesc-home-ev-solar-control/blob/main/docs/03-settings.de.md) |
-| How it works | [04-how-it-works](https://github.com/satscan1/hesc-home-ev-solar-control/blob/main/docs/04-how-it-works.md) | [04-hoe-het-werkt](https://github.com/satscan1/hesc-home-ev-solar-control/blob/main/docs/04-how-it-works.nl.md) | [04-so-funktioniert-es](https://github.com/satscan1/hesc-home-ev-solar-control/blob/main/docs/04-how-it-works.de.md) |
-| Chargers and sources | [05-chargers-and-sources](https://github.com/satscan1/hesc-home-ev-solar-control/blob/main/docs/05-chargers-and-sources.md) | [05-laadpalen-en-bronnen](https://github.com/satscan1/hesc-home-ev-solar-control/blob/main/docs/05-chargers-and-sources.nl.md) | [05-wallboxen-und-quellen](https://github.com/satscan1/hesc-home-ev-solar-control/blob/main/docs/05-chargers-and-sources.de.md) |
-| Dashboard | [06-dashboard](https://github.com/satscan1/hesc-home-ev-solar-control/blob/main/docs/06-dashboard.md) | [06-dashboard](https://github.com/satscan1/hesc-home-ev-solar-control/blob/main/docs/06-dashboard.nl.md) | [06-dashboard](https://github.com/satscan1/hesc-home-ev-solar-control/blob/main/docs/06-dashboard.de.md) |
-| Smart charging explained | [07-smart-charging-explained](https://github.com/satscan1/hesc-home-ev-solar-control/blob/main/docs/07-smart-charging-explained.md) | [07-slim-laden-uitgelegd](https://github.com/satscan1/hesc-home-ev-solar-control/blob/main/docs/07-smart-charging-explained.nl.md) | [07-intelligentes-laden-erklärt](https://github.com/satscan1/hesc-home-ev-solar-control/blob/main/docs/07-smart-charging-explained.de.md) |
-| A day with HESC | [08-a-day-with-hesc](https://github.com/satscan1/hesc-home-ev-solar-control/blob/main/docs/08-a-day-with-hesc.md) | [08-een-dag-met-hesc](https://github.com/satscan1/hesc-home-ev-solar-control/blob/main/docs/08-a-day-with-hesc.nl.md) | [08-ein-tag-mit-hesc](https://github.com/satscan1/hesc-home-ev-solar-control/blob/main/docs/08-a-day-with-hesc.de.md) |
-| Troubleshooting | [09-troubleshooting](https://github.com/satscan1/hesc-home-ev-solar-control/blob/main/docs/09-troubleshooting.md) | [09-problemen-oplossen](https://github.com/satscan1/hesc-home-ev-solar-control/blob/main/docs/09-troubleshooting.nl.md) | [09-fehlerbehebung](https://github.com/satscan1/hesc-home-ev-solar-control/blob/main/docs/09-troubleshooting.de.md) |
+| Part | Plug and play | You fill in |
+|---|---|---|
+| Charger | Wallbox, Peblar, Alfen, go-e, Wattpilot, SMA, evcc, Ohme | Zappi and Easee ask a little more; *Other* all by hand |
+| Solar power, smart meter | usually found; HESC makes a **suggestion** | when the suggestion is wrong |
+| Solar forecast | Solcast and other forecasts are found | — |
+| Prices | your country first, then that country's sources: Grid Clock, EnergyZero/ANWB, EasyEnergy, Tibber, Zonneplan, Nord Pool, EPEX Spot, ENTSO-e, PVPC, OMIE, Energi Data Service, Octopus Energy, Amber Electric | *Own sensor with a price list*: pick the sensor |
+| Battery capacity | when the car reports it | otherwise you type it |
+| Home battery | HESC finds your batteries and makes a suggestion | confirm step by step (per battery, or one total sensor) |
+| Weather station | — | switch it on yourself and pick the sensor |
 
+Every setting has a small **(i)** with one or two sentences of explanation.
+
+## 4. One or two cars, one or two chargers
+
+- **One car, one charger.** The usual case.
+- **Two cars, one charger.** HESC plans both cars: the first before the time you move the cable,
+  the other after. The overview says when to swap; a reminder on your phone is possible
+  (*Settings › Standard › Move the cable*).
+- **Two cars, two chargers.** Each car has its own charger; same brand or different.
+
+Adding and removing is done in *Settings › Basic › Cars and chargers*:
+- **+ Add car** — a second car, on the same charger or with its own.
+- **+ Add charger** — when two cars share one charger, car 2 gets its own charger.
+- **Remove** — only car 2 and charger 2. HESC first shows what will go and asks for
+  confirmation. Charging costs and history are not deleted but kept.
+
+## 5. The panel
+
+At the top a row of buttons: **Live** (shadow mode), the planning per car, **Costs**,
+**Solar forecast**, **Settings**, **Report** and **Guide**.
+
+**Today and tomorrow** — on the left a short letter per car (when it charges, from sun or grid, to what
+% and what it costs), on the right the chart with solar forecast, price and the charging moments per car.
+**Coming week** — per car the next seven days; tap a car or a day to open its planning.
+
+## 6. Planning
+
+![Planning](docs/images/v4/en/en-02-planning.jpg)
+
+- **Rhythm** — a standard ready time and battery %, per weekday on or off, or with its own time or %.
+- **This time only** — skip the next time, another time or %, or **charge now**.
+- **Calendar** — single days off or extra, and a vacation (drag from the first to the last day).
+- **Own day** — double-tap a day (an empty one too) for its own time and battery goal.
+- **Reminder: not plugged in** — a reminder when the car is not plugged in in the evening; not when the
+  car reported a level that is high enough within the last hour.
+- **On your phone** — month and rhythm are pages of their own; you can let HESC open on the month.
+
+**Charge now is protected.** The arrows only choose the goal. HESC charges from the grid only after
+**Start** and the confirmation. Stopping is always possible.
+
+## 7. Settings
+
+Three tabs:
+
+- **Basic** — charger, car(s), prices, HESC on/off and *Cars and chargers*. With two cars they are
+  side by side. The **⏻** tag at a car switches HESC on or off for that car.
+- **Standard** — tiles: Charger 1 (and 2), Sun and grid, Home battery, Notifications, Back-up and Cheap
+  chances. A tile shows whether all is fine (✓) or what is missing (⚠); tap it for the details.
+  Sun and grid, Home battery, Cheap chances and Notifications have **Set up step by step**: one question
+  per screen, HESC's suggestion already ticked, live values and a summary before saving.
+- **Expert** — tiles for the finer tuning: Charger, Sun: start and keep charging (with the
+  weather station), Times and release, HPVC, Advice and Notifications. What you change often is on the tile itself.
+  Under *Notifications* are also **Run the first start again** and **Back to v3**.
+
+**Prices.** Pick your country first; it also sets the currency. Then you only see that country's price
+sources that are installed on your system, one tap to choose. HESC names what is still missing.
+
+**Phases.** With 3 phases and a meter per phase, *Sun and grid* shows how your sun is spread over the
+phases, now and on average (for example 40% · 38% · 22%). *Expert › Advice › Phase overview* shows per
+phase whether it gets enough sun for your charger, and what you can do about it.
+
+![Settings › Basic](docs/images/v4/en/en-05-settings-basic.jpg)
+![Settings › Standard](docs/images/v4/en/en-06-settings-standard.jpg)
+
+**Picking sensors.** Tap a sensor field: you get a short list, with the current choice and HESC's
+**suggestion** on top. After OK, HESC saves it at once. The modes of your charger for *charging on sun* and *no car* are ticked.
+
+## 8. HESC on, off and shadow
+
+| Switch | What it does |
+|---|---|
+| **HESC is on** (Basic) | Main switch. Off = HESC does nothing. |
+| **Shadow mode** (Basic and *Live*) | HESC calculates and shows what it would do, but controls nothing. |
+| **⏻ per car** (Basic, at the car) | Off = HESC still plans for that car, but does not control that car and its own charger. Another car carries on. |
+
+## 9. Costs, solar forecast and report
+
+- **Costs** — what charging cost, per day, week, month and year, from sun and from the grid; with two
+  cars per car. *Export charging costs* puts the costs in two CSV files in the hesc_v4 folder; *Download charging costs* gives them to you.
+- **Solar forecast** — expected sun against actual, and when the car can charge on solar power.
+- **Report** — the **charging report** (how charging on sun went, per day, with advice), and **keep or
+  share**: full back-up, anonymous to share, or short for a bug report. The full back-up is kept in a
+  folder of its own (`/config/hesc_backup`), so it stays when you remove HESC.
+
+![Costs](docs/images/v4/en/en-03-costs.jpg)
+![Solar forecast](docs/images/v4/en/en-04-solar-forecast.jpg)
+
+## Not ready yet
+
+- Names of your own devices and sensors come from Home Assistant, in the language you use there.
+- The new price sources (EPEX Spot, PVPC, OMIE, Energi Data Service, Octopus Energy, Amber Electric, Zonneplan,
+  ENTSO-e) are tested with their list shape, not yet on a real installation. If your source does not work, please report it.
+
+Screenshots (from beta.1): test board with demo data (invented cars, prices and charging history). Also in
+[Dutch](docs/images/v4/nl/) and [German](docs/images/v4/de/).
 
 ## Support this project
 
-Find this tool useful? Give it a ⭐ on GitHub, so others can find it too.
+Find HESC useful? Give it a ⭐ on GitHub, so others can find it too.
 
-Want to do a little more? Support me on Ko-fi:
+Want to do a little more? Support me on [Ko-fi](https://ko-fi.com/satscan).
 
-<a href="https://ko-fi.com/satscan"><img src="https://img.shields.io/badge/Ko--fi-satscan-FF5E5B?logo=kofi&logoColor=white" alt="Support me on Ko-fi"></a>
+## License
+
+[GPL-3.0](LICENSE)
