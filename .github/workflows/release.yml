@@ -1,4 +1,4 @@
-# On every published release: build hesc.zip from custom_components/hesc and attach it to the
+# On every published release: build hesc_v4.zip from custom_components/hesc_v4 and attach it to the
 # release. HACS installs from this zip (hacs.json: zip_release), and GitHub counts its downloads.
 name: Release zip
 
@@ -16,14 +16,14 @@ jobs:
       - uses: actions/checkout@v4
       - name: Check the version matches the tag
         run: |
-          v=$(python3 -c "import json;print(json.load(open('custom_components/hesc/manifest.json'))['version'])")
+          v=$(python3 -c "import json;print(json.load(open('custom_components/hesc_v4/manifest.json'))['version'])")
           t="${GITHUB_REF_NAME#v}"
           if [ "$v" != "$t" ]; then echo "manifest version $v does not match tag $GITHUB_REF_NAME"; exit 1; fi
-      - name: Build hesc.zip
+      - name: Build hesc_v4.zip
         run: |
-          cd custom_components/hesc
-          zip -r -X ../../hesc.zip . -x '__pycache__/*' '*.pyc'
+          cd custom_components/hesc_v4
+          zip -r -X ../../hesc_v4.zip . -x '__pycache__/*' '*.pyc'
       - name: Attach to the release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release upload "$GITHUB_REF_NAME" hesc.zip --clobber
+        run: gh release upload "$GITHUB_REF_NAME" hesc_v4.zip --clobber
