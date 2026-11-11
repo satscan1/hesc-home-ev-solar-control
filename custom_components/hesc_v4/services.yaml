@@ -1,0 +1,274 @@
+set_charge_plan:
+  fields:
+    car:
+      required: false
+      default: ev1
+      example: ev2
+      selector:
+        select:
+          options:
+            - ev1
+            - ev2
+    day:
+      required: false
+      example: Tomorrow
+      selector:
+        select:
+          options:
+            - Today
+            - Tomorrow
+            - Mon
+            - Tue
+            - Wed
+            - Thu
+            - Fri
+            - Sat
+            - Sun
+    time:
+      required: false
+      example: "07:00"
+      selector:
+        text:
+    goal:
+      required: false
+      example: 80
+      selector:
+        number:
+          min: 15
+          max: 100
+          step: 5
+          unit_of_measurement: "%"
+          mode: slider
+
+charge_plan_off:
+  fields:
+    car:
+      required: false
+      default: ev1
+      example: ev2
+      selector:
+        select:
+          options:
+            - ev1
+            - ev2
+
+skip_plan_day:
+  fields:
+    car:
+      required: false
+      default: ev1
+      example: ev2
+      selector:
+        select:
+          options:
+            - ev1
+            - ev2
+    date:
+      required: false
+      example: "2026-10-23"
+      selector:
+        date:
+
+undo_skip_plan_day:
+  fields:
+    car:
+      required: false
+      default: ev1
+      example: ev2
+      selector:
+        select:
+          options:
+            - ev1
+            - ev2
+
+charge_now:
+  fields:
+    car:
+      required: false
+      default: ev1
+      example: ev2
+      selector:
+        select:
+          options:
+            - ev1
+            - ev2
+    goal:
+      required: true
+      example: 90
+      selector:
+        number:
+          min: 15
+          max: 100
+          step: 5
+          unit_of_measurement: "%"
+          mode: slider
+
+charge_now_off:
+  fields:
+    car:
+      required: false
+      default: ev1
+      example: ev2
+      selector:
+        select:
+          options:
+            - ev1
+            - ev2
+
+only_this_time:
+  fields:
+    car:
+      required: false
+      default: ev1
+      example: ev2
+      selector:
+        select:
+          options:
+            - ev1
+            - ev2
+    date:
+      required: false
+      example: "2026-11-06"
+      selector:
+        date:
+    skip:
+      required: false
+      default: false
+      selector:
+        boolean:
+    time:
+      required: false
+      example: "06:15"
+      selector:
+        text:
+    goal:
+      required: false
+      example: 60
+      selector:
+        number:
+          min: 15
+          max: 100
+          step: 5
+          unit_of_measurement: "%"
+          mode: slider
+
+only_this_time_clear:
+  fields:
+    car:
+      required: false
+      default: ev1
+      example: ev2
+      selector:
+        select:
+          options:
+            - ev1
+            - ev2
+
+calendar_day:
+  fields:
+    car:
+      required: false
+      default: ev1
+      example: ev2
+      selector:
+        select:
+          options:
+            - ev1
+            - ev2
+    date:
+      required: true
+      example: "2026-11-11"
+      selector:
+        date:
+    what:
+      required: true
+      example: "off"
+      selector:
+        select:
+          options:
+            - "off"
+            - extra
+            - rhythm
+    time:
+      required: false
+      example: "07:30"
+      selector:
+        text:
+    goal:
+      required: false
+      example: 80
+      selector:
+        number:
+          min: 10
+          max: 100
+          unit_of_measurement: "%"
+
+vacation:
+  fields:
+    car:
+      required: false
+      default: ev1
+      example: ev2
+      selector:
+        select:
+          options:
+            - ev1
+            - ev2
+    start:
+      required: true
+      example: "2026-12-20"
+      selector:
+        date:
+    end:
+      required: false
+      example: "2027-01-03"
+      selector:
+        date:
+
+vacation_stop:
+  fields:
+    car:
+      required: false
+      default: ev1
+      example: ev2
+      selector:
+        select:
+          options:
+            - ev1
+            - ev2
+
+battery_level:
+  fields:
+    car:
+      required: false
+      default: ev1
+      example: ev2
+      selector:
+        select:
+          options:
+            - ev1
+            - ev2
+    level:
+      required: true
+      example: 35
+      selector:
+        number:
+          min: 1
+          max: 100
+          step: 1
+          unit_of_measurement: "%"
+          mode: slider
+
+export:
+  fields:
+    form:
+      required: true
+      example: anonymous
+      selector:
+        select:
+          options:
+            - full
+            - anonymous
+            - bug
+
+restore_backup:
