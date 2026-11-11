@@ -2702,7 +2702,7 @@ views:
         - **Report**: everything HESC measured and decided, for yourself or when you ask for help.
 
 
-        See also: [How it works](https://github.com/satscan1/hesc-home-ev-solar-control/blob/main/docs/04-how-it-works.md) for the details, and [A day with HESC](https://github.com/satscan1/hesc-home-ev-solar-control/blob/main/docs/08-a-day-with-hesc.md) for an example day.'
+        See also: [How it works](https://github.com/satscan1/hesc-home-ev-solar-control/blob/main/README.md) for the details.'
       grid_options:
         columns: full
 - title: Uitleg
@@ -3039,7 +3039,7 @@ views:
         - **Rapport**: alles wat HESC gemeten en besloten heeft, voor jezelf of als je om hulp vraagt.
 
 
-        Zie ook: [Hoe het werkt](https://github.com/satscan1/hesc-home-ev-solar-control/blob/main/docs/04-how-it-works.nl.md) voor de details, en [Een dag met HESC](https://github.com/satscan1/hesc-home-ev-solar-control/blob/main/docs/08-a-day-with-hesc.nl.md) voor een voorbeelddag.'
+        Zie ook: [Hoe het werkt](https://github.com/satscan1/hesc-home-ev-solar-control/blob/main/README.nl.md) voor de details.'
       grid_options:
         columns: full
 - title: Anleitung
@@ -3375,7 +3375,7 @@ views:
         - **Bericht**: alles, was HESC gemessen und entschieden hat, für dich selbst oder wenn du um Hilfe bittest.
 
 
-        Siehe auch: [So funktioniert es](https://github.com/satscan1/hesc-home-ev-solar-control/blob/main/docs/04-how-it-works.de.md) für die Details und [Ein Tag mit HESC](https://github.com/satscan1/hesc-home-ev-solar-control/blob/main/docs/08-a-day-with-hesc.de.md) für einen Beispieltag.'
+        Siehe auch: [So funktioniert es](https://github.com/satscan1/hesc-home-ev-solar-control/blob/main/README.de.md) für die Details.'
       grid_options:
         columns: full
 - type: sections
