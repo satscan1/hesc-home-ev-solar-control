@@ -730,7 +730,6 @@
       "house_phases": {
         "name": "Hausanschluss: Phasen",
         "state": {
-          "Don't know": "Weiß ich nicht",
           "1": "1 Phase",
           "3": "3 Phasen"
         }
